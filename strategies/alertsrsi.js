@@ -1,6 +1,6 @@
-var vars = require(__dirname + '/vars.js')
-var indicators = require(__dirname + '/indicators.js')
-var chatBot = require(__dirname + '/chat_bot.js')
+var vars = require('../vars.js')
+var indicators = require('../indicators.js')
+var chatBot = require('../chat_bot.js')
 
 var pairsValidation = ["1h", "5m"]
 var pairsWatch = ["5m"]
