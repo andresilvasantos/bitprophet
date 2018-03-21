@@ -1,0 +1,20 @@
+{
+  "name": "bitprophet",
+  "version": "0.2.7",
+  "description": "Crypto currency automated trading platform for Binance.",
+  "main": "bitprophet.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andresilvasantos/bitprophet.git"
+  },
+  "author": "Andre Santos",
+  "license": "CC-BY-NC-ND-3.0",
+  "dependencies": {
+    "node-binance-api": "^0.4.22",
+    "node-telegram-bot-api": "^0.30.0"
+  },
+  "devDependencies": {}
+}
