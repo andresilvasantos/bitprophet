@@ -7,6 +7,7 @@ const pairGenerator = require(__dirname + '/pair_generator.js')
 var indicators = require(__dirname + '/indicators.js')
 var strategyManager = require(__dirname + '/strategy_manager.js')
 const binance = require('node-binance-api');
+var emoji = require('node-emoji')
 
 binance.options({
   'APIKEY': config.binance.key,
@@ -15,13 +16,15 @@ binance.options({
   reconnect: false
 });
 
+var btcIntervalsWatch = ["15m", "5m"]
+
 function initPairs() {
     var exchangePairs = Object.keys(vars.pairsInfo)
     for(var i = 0; i < exchangePairs.length; ++i) {
         var pairName = exchangePairs[i]
         if(pairName == "BTCUSDT") {
             vars.btcUSDTPair = new pairGenerator.create(pairName)
-            vars.btcUSDTPair.addWatcherChartUpdates("15m")
+            vars.btcUSDTPair.addWatcherChartUpdates(btcIntervalsWatch)
         }
         if(pairName.indexOf("BTC") != pairName.length - 3) continue
 
@@ -34,7 +37,7 @@ function balance_update(data) {
 	for ( let obj of data.B ) {
 		let { a:asset, f:available, l:onOrder } = obj;
         if(asset == "BNB" && parseFloat(available) < 0.05) {
-            chatBot.sendMessage("WARNING - Low BNB | " + available)
+            chatBot.sendMessage(emoji.get("warning") + emoji.get("fuelpump") + " Low BNB | " + available)
             break
         }
 	}
@@ -88,7 +91,7 @@ function execution_update(data) {
             order.waiting = false
 
             if(!order.automatedCancel) {
-                chatBot.sendMessage("Trading stopped for pair " + symbol + " due to human intervention");
+                chatBot.sendMessage(emoji.get("raised_hand") + " Trading stopped for pair " + symbol + " due to human intervention");
                 strategy.resetPairData(pair.name)
             }
         }
@@ -97,40 +100,57 @@ function execution_update(data) {
     //if(traded || automatedOrder) {
         var quantityFixed = quantity < 1 ? quantity : parseFloat(quantity).toFixed(2)
         //var nature = automatedOrder ? "[A]" : "[M]"
-        var type = traded ? "Traded" : (isNew ? "Created" : "Canceled")
+        var type, emojiStr
+        if(traded) {
+            type = "Traded"
+            emojiStr = orderStatus == "FILLED" ? "high_brightness" : "low_brightness"
+        }
+        else if(isNew) {
+            type = "Created"
+            emojiStr = "package"
+        }
+        else {
+            type = "Canceled"
+            emojiStr = "wastebasket"
+        }
+
         var oType = orderType == "STOP_LOSS_LIMIT" ? "SL " : ""
         var fill = traded ? " | " + parseFloat(filled * 100).toFixed(2) + "%" : ""
 
-        chatBot.sendMessage(/*nature + " Order " + */oType + type + " - " + symbol + "\t" + side + " "+ quantityFixed + "@" + exchUtils.fixPrice(symbol, price) + fill);
+        chatBot.sendMessage(emoji.get(emojiStr) + " " + oType + type + " - " + symbol + "\t" + side + " "+ quantityFixed + "@" + exchUtils.fixPrice(symbol, price) + fill);
     //}
 }
 
 function controlBitcoinRSI() {
-    vars.btcUSDTPair.ensureChartUpdates("15m")
-    var ticks = vars.btcUSDTPair.chart("15m").ticks
+    vars.btcUSDTPair.ensureChartUpdates(btcIntervalsWatch)
+    var chart15m = vars.btcUSDTPair.chart(btcIntervalsWatch[0]).ticks
+    var chart5m = vars.btcUSDTPair.chart(btcIntervalsWatch[1]).ticks
 
-    if(ticks.length >= 500) {
-        var lastClose = parseFloat(ticks[ticks.length - 1].close)
-        var rsi15m = indicators.rsi(ticks, 14, 100, 1)
+    if(chart15m.length >= 500 && chart5m.length >= 500) {
+        var lastClose = parseFloat(chart5m[chart5m.length - 1].close)
+
+        var rsi15m = indicators.rsi(chart15m, 14, 100, 1)
         rsi15m = parseFloat(rsi15m[rsi15m.length - 1]).toFixed(2)
+        var rsi5m = indicators.rsi(chart5m, 14, 100, 1)
+        rsi5m = parseFloat(rsi5m[rsi5m.length - 1]).toFixed(2)
 
-        if(rsi15m > 70 && !vars.redAlert) {
-            chatBot.sendMessage("Danger: BTC is going up | " + lastClose + "$ | RSI 15m: " + rsi15m)
-            vars.paused = true
-            vars.redAlert = true
+        vars.btcAnalysis.price = lastClose
+        vars.btcAnalysis.rsi15m = rsi15m
+        vars.btcAnalysis.rsi5m = rsi5m
+
+        if(rsi15m > 70 && !vars.btcAnalysis.dangerZone) {
+            chatBot.sendMessage(emoji.get("triangular_flag_on_post") + " Danger: BTC is going up | " + lastClose + "$ | RSI 15m: " + rsi15m)
+            vars.btcAnalysis.dangerZone = true
         }
-        else if(rsi15m < 30 && !vars.redAlert) {
-            chatBot.sendMessage("Danger: BTC is going down | " + lastClose + "$ | RSI 15m: " + rsi15m)
-            vars.paused = true
-            vars.redAlert = true
+        else if(rsi15m < 30 && !vars.btcAnalysis.dangerZone) {
+            chatBot.sendMessage(emoji.get("triangular_flag_on_post") + " Danger: BTC is going down | " + lastClose + "$ | RSI 15m: " + rsi15m)
+            vars.btcAnalysis.dangerZone = true
         }
-        else if(vars.redAlert && rsi15m <= 65 && rsi15m >= 35) {
-            chatBot.sendMessage("Back to normal: BTC is stabilizing | " + lastClose + "$ | RSI 15m: " + rsi15m)
-            vars.paused = false
-            vars.redAlert = false
+        else if(vars.btcAnalysis.dangerZone && rsi15m <= 65 && rsi15m >= 35) {
+            chatBot.sendMessage(emoji.get("waving_white_flag") + " Back to normal: BTC is stabilizing | " + lastClose + "$ | RSI 15m: " + rsi15m)
+            vars.btcAnalysis.dangerZone = false
         }
     }
-
     setTimeout(controlBitcoinRSI, 1500)
 }
 
@@ -161,14 +181,24 @@ exchUtils.initExchangeInfo(function(error) {
         process.exit(1)
     }
 
-    chatBot.init()
-    binance.websockets.userData(balance_update, execution_update);
-    initPairs()
-    strategyManager.init()
+    exchUtils.accountTotalBalance(function(error, balance) {
+        if(error) {
+            console.log("Error reading total account balance: " + error)
+            process.exit(1)
+        }
 
-    chatBot.sendMessage("Starting...")
-    console.log("Initialization complete.")
+        vars.startBTCAmount = balance.btcTotal.toFixed(8)
 
-    controlBitcoinRSI()
-    processStrategies()
+        chatBot.init()
+        binance.websockets.userData(balance_update, execution_update);
+        initPairs()
+        strategyManager.init()
+
+        chatBot.sendMessage(emoji.get("traffic_light") + " BitProphet started: " + utils.formatDate(new Date(), true, true) + "\nTotal: " +
+            vars.startBTCAmount + "BTC | " + balance.usdtTotal.toFixed(2) + "$")
+        console.log("Initialization complete.")
+
+        controlBitcoinRSI()
+        processStrategies()
+    })
 })

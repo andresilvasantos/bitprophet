@@ -6,9 +6,8 @@ module.exports = {
 
         var _charts = {}
 
-        var _blackFlagTime = 0
         var _profit = 0
-
+        var _accountProfit = 0
 
         this.name = function() {
             return _name
@@ -184,8 +183,17 @@ module.exports = {
             _profit += profit
         }
 
-        this.resetProfit = function() {
+        this.accountProfit = function() {
+            return _accountProfit
+        }
+
+        this.addAccountProfit = function(profit) {
+            _accountProfit += profit
+        }
+
+        this.resetProfits = function() {
             _profit = 0
+            _accountProfit = 0
         }
     }
 }

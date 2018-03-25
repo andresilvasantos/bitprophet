@@ -1,6 +1,7 @@
 var vars = require(__dirname + '/vars.js')
 var exchUtils = require(__dirname + '/exchange_utils.js')
 const chatBot = require(__dirname + '/chat_bot.js')
+var emoji = require('node-emoji')
 
 module.exports = {
     create: function(strategyId, strategyName) {
@@ -16,6 +17,7 @@ module.exports = {
         var _pairsData = {}
 
         var _profit = 0
+        var _accountProfit = 0
 
         this.id = function() {
             return _id
@@ -69,6 +71,15 @@ module.exports = {
             _source = require(__dirname + '/strategy_' + _id + '.js')
         }
 
+        this.pairs = function() {
+            var pairsArray = []
+            for(var pairName of Object.keys(_pairsData)) {
+                var pairData = this.pairData(pairName)
+                pairsArray.push(pairData)
+            }
+            return pairsArray
+        }
+
         this.validPairs = function() {
             var validPairsArray = []
             for(var pairName of Object.keys(_pairsData)) {
@@ -98,12 +109,13 @@ module.exports = {
                 var pairData = this.pairData(pair.name())
                 var blackFlagTime = currentTime - pairData.blackFlagTime
 
-                if(pairData.processing || (pairData.status <= 0 && (vars.paused ||
+                if(pairData.processing || (pairData.status <= 0 && (vars.paused || vars.btcAnalysis.dangerZone ||
                     this.tradingPairs().length >= _maxTradingPairs || blackFlagTime < 15 * 60 * 1000))) continue
 
                 if(pairData.status <= 0) {
-                    var needsCheck = currentTime - pairData.lastValidCheck >= 10 * 60 * 1000
+                    if(pairData.status == -1) _source.resetPairCustomData(pairData)
 
+                    var needsCheck = currentTime - pairData.lastValidCheck >= 10 * 60 * 1000
                     if(needsCheck) {
                         _source.checkValidWorkingPair(this, pairData)
                         continue
@@ -187,14 +199,23 @@ module.exports = {
                     }
                 }
             }
+
             var finalProfit = (avgSoldPrice - avgBoughtPrice) / avgBoughtPrice * 100
             if(finalProfit <= 0) pairData.blackFlagTime = Date.now()
+            var totalBoughtBTC = avgBoughtPrice * boughtAmount
+            var totalSoldBTC = avgSoldPrice * soldAmount
+            var fees = (totalSoldBTC + totalBoughtBTC) * vars.tradingFees
+            var accountProfit = (totalSoldBTC - totalBoughtBTC - fees) / vars.startBTCAmount * 100
             pairData.profit += finalProfit
+            pairData.accountProfit += accountProfit
             vars.pairs[pairData.name].addProfit(finalProfit)
+            vars.pairs[pairData.name].addAccountProfit(accountProfit)
             this.addProfit(finalProfit)
+            this.addAccountProfit(accountProfit)
+            var emojiCode = finalProfit > 0 ? emoji.get("golf") + emoji.get("tada") : emoji.get("golf") + emoji.get("cold_sweat")
 
-            chatBot.sendMessage(_name + ": " + pairData.name + " trading finished with a profit of " + finalProfit.toFixed(2) + "%" +
-                " | Avg Buy @" + avgBoughtPrice + " & Avg Sold @" + avgSoldPrice)
+            chatBot.sendMessage(emojiCode + " " + _name + ": " + pairData.name + " trading finished!\nProfit: " + finalProfit.toFixed(2) + "%\nAccount profit: " +
+                accountProfit.toFixed(2) + "%\nAvg Bought @" + avgBoughtPrice + " & Avg Sold @" + avgSoldPrice)
 
             this.resetPairData(pairData.name)
         }
@@ -216,6 +237,7 @@ module.exports = {
                 data.forceSell = false
                 data.lastValidCheck = -1
                 data.profit = 0
+                data.accountProfit = 0
                 _pairsData[pairName] = data
             }
             return _pairsData[pairName]
@@ -246,9 +268,7 @@ module.exports = {
             }
 
             data.orders = []
-
-            var pairData = this.pairData(pairName)
-            _source.resetPairCustomData(this, pairData)
+            _source.resetPairCustomData(this, data)
         }
 
         this.createOrder = function(pairName, orderId, side, price, amount, stopLoss = false) {
@@ -328,8 +348,22 @@ module.exports = {
             _profit += profit
         }
 
-        this.resetProfit = function() {
+        this.accountProfit = function() {
+            return _accountProfit
+        }
+
+        this.addAccountProfit = function(profit) {
+            _accountProfit += profit
+        }
+
+        this.resetProfits = function() {
             _profit = 0
+            _accountProfit = 0
+        }
+
+        this.sendMessage = function(pairData, message, emojiCode) {
+            var emojiString = emojiCode ? emoji.get(emojiCode) + " " : ""
+            chatBot.sendMessage(emojiString + _name + ": " + pairData.name + " " + message)
         }
     }
 }

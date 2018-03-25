@@ -32,6 +32,55 @@ module.exports = {
             next(error)
         });
     },
+    accountTotalBalance: function(next) {
+        var tokens = {}
+        binance.prices((error, ticker) => {
+            if(error) {
+                next("Error reading prices: " + error)
+                return
+            }
+
+            for ( var symbol in ticker ) {
+                tokens[symbol] = parseFloat(ticker[symbol]);
+            }
+
+            binance.balance((error, balances) => {
+                if(error) {
+                    next("Error reading balances: " + error)
+                    return
+                }
+
+                var accountBalance = {}
+                accountBalance.btcTotal = 0
+                accountBalance.btcAvailable = 0
+                accountBalance.usdtTotal = 0
+                accountBalance.bnbAmount = 0
+
+                var balance = {};
+                for ( var asset in balances ) {
+                    var obj = balances[asset];
+                    var available = isNaN(obj.available) ? 0 : parseFloat(obj.available);
+                    var inOrder = isNaN(obj.onOrder) ? 0 : parseFloat(obj.onOrder);
+
+                    if(asset == "BNB") accountBalance.bnbAmount = available
+
+                    if(asset == "BTC") {
+                        accountBalance.btcTotal += available + inOrder
+                        accountBalance.btcAvailable = available
+                    }
+                    else if(asset == "USDT") accountBalance.btcTotal += (available + inOrder) / tokens.BTCUSDT;
+                    else {
+                        var btcValue = (available + inOrder) * tokens[asset+'BTC'];
+                        if(!isNaN(btcValue)) accountBalance.btcTotal += btcValue
+                    }
+                }
+
+                accountBalance.usdtTotal = accountBalance.btcTotal * tokens.BTCUSDT
+
+                next(null, accountBalance)
+            });
+        });
+    },
     normalizeAmount: function(pair, amount, price) {
         // Set minimum order amount with minQty
         if ( amount < vars.pairsInfo[pair].minQty ) amount = vars.pairsInfo[pair].minQty;

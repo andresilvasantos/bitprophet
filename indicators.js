@@ -283,18 +283,19 @@ module.exports = {
 
         return waveTrendArray
     },
-    nextSupportBase: function(ticks, length, startBackRead = 1, confirmationsNeeded = 2) {
-        var nextBase = this.lowestValue(ticks, startBackRead, 0)
+    nextSupportBase: function(ticks, length, startBackRead = 1, confirmationsNeeded = 2, percentageBounce = 1.01) {
+        var referenceLowValue = this.lowestValue(ticks, startBackRead, 0)
+        var nextBase = referenceLowValue
 
         var confirmations = -1
+        var indexNextBase = -1
         for(var i = startBackRead; i < length; ++i) {
-            var tickLow = ticks[ticks.length - 1 - i].low
-            /*var tickOpen = ticks[ticks.length - 1 - i].open
-            var tickClose = ticks[ticks.length - 1 - i].close
-            var tickLow = tickOpen < tickClose ? tickOpen : tickClose*/
+            var index = ticks.length - 1 - i
+            var tickLow = ticks[index].low
 
             if(tickLow <= nextBase) {
                 nextBase = tickLow
+                indexNextBase = index
                 confirmations = 0
                 continue
             }
@@ -302,11 +303,22 @@ module.exports = {
                 confirmations++
 
                 if(confirmations >= confirmationsNeeded) {
-                    break
+
+                    var highestPoint = -1
+                    for(var j = indexNextBase + 1; j < length; ++j) {
+                        var tickHigh = ticks[j].high
+                        if(tickHigh > highestPoint) highestPoint = tickHigh
+                    }
+                    if(highestPoint / nextBase > percentageBounce) break
+                    else {
+                        confirmations = 0
+                        continue
+                    }
                 }
             }
         }
 
+        if(confirmations != confirmationsNeeded) return null
         return nextBase
     },
     measureMaxDiff: function(ticks, length, measureWicks = false) {
