@@ -1,10 +1,7 @@
-var vars = require('../vars.js')
-var indicators = require('../indicators.js')
-var exchUtils = require('../exchange_utils.js')
-var chatBot = require('../chat_bot.js')
+var bp = require('../bitprophet.js')
 
-var pairsValidation = ["1h", "5m"]
-var pairsWatch = ["1h", "15m", "5m"]
+var intervalsValidation = ["1h", "5m"]
+var intervalsWatch = ["1h", "15m", "5m"]
 
 module.exports = {
     resetPairCustomData: function(pair) {
@@ -15,16 +12,16 @@ module.exports = {
     checkValidWorkingPair: function(strategy, pair) {
         function setPairValid(valid) {
             if(valid) {
-                if(pair.status == -1) pair.functions.addWatcherChartUpdates(pairsWatch)
+                if(pair.status == -1) pair.functions.addWatcherChartUpdates(intervalsWatch)
                 pair.status = 0
             }
             else {
-                if(pair.status == 0) pair.functions.removeWatcherChartUpdates(pairsWatch)
+                if(pair.status == 0) pair.functions.removeWatcherChartUpdates(intervalsWatch)
                 pair.status = -1
             }
         }
 
-        if(pair.functions.chartsNeedUpdate(pairsValidation, 60, true)) return
+        if(pair.functions.chartsNeedUpdate(intervalsValidation, 60, true)) return
 
         pair.lastValidCheck = Date.now()
 
@@ -37,11 +34,11 @@ module.exports = {
         }
 
         var close1h = parseFloat(chart1h[chart1h.length - 1].close)
-        var stoch1h = indicators.stochastic(chart1h, 14, 11)
-        var stoch1hAvg = indicators.average(stoch1h)
-        var stoch5m = indicators.stochastic(chart5m, 14, 24)
-        var stoch5mAvg = indicators.average(stoch5m)
-        var maxDiff5m = indicators.measureMaxDiff(chart5m, 120)
+        var stoch1h = bp.indicators.stochastic(chart1h, 14, 11)
+        var stoch1hAvg = bp.indicators.average(stoch1h)
+        var stoch5m = bp.indicators.stochastic(chart5m, 14, 24)
+        var stoch5mAvg = bp.indicators.average(stoch5m)
+        var maxDiff5m = bp.indicators.measureMaxDiff(chart5m, 120)
 
         var volume24h = 0
         for(var i = chart1h.length - 24; i < chart1h.length; ++i) {
@@ -54,8 +51,8 @@ module.exports = {
         setPairValid(volume24h >= 100 && stoch1hAvg > 30 && stoch5mAvg >= 20 && maxDiff5m < 100)
     },
     process: function(strategy, pair) {
-        if(!pair.functions.chartUpdatesActive(pairsWatch)) {
-            pair.functions.ensureChartUpdates(pairsWatch)
+        if(!pair.functions.chartUpdatesActive(intervalsWatch)) {
+            pair.functions.ensureChartUpdates(intervalsWatch)
             return
         }
 
@@ -96,7 +93,7 @@ module.exports = {
             pair.tryBuyTimestamp = Date.now()
 
             pair.processing = true
-            exchUtils.createBuyOrder(pair.name, parseFloat(price).toFixed(8), strategy.buyAmountBTC(), function(error, orderId, quantity, filled) {
+            bp.exchUtils.createBuyOrder(pair.name, parseFloat(price).toFixed(8), strategy.buyAmountBTC(), function(error, orderId, quantity, filled) {
                 pair.processing = false
 
                 if(error) {
@@ -105,12 +102,12 @@ module.exports = {
                     return
                 }
 
-                chatBot.sendMessage(strategy.name() + ": trading " + pair.name)
+                strategy.sendMessage(pair, "trading started", "beginner")
 
-                pair.entryPrice = parseFloat(price).toFixed(8)
+                pair.entryPrice = parseFloat(price)
                 pair.sellTarget = pair.entryPrice * (1 + strategy.profitTarget())
 
-                var order = strategy.createOrder(pair.name, orderId, "BUY", parseFloat(price).toFixed(8), parseFloat(quantity))
+                var order = strategy.createOrder(pair.name, orderId, "BUY", parseFloat(price), parseFloat(quantity))
 
                 if(filled) {
                     pair.amountToSell = order.amount
@@ -125,21 +122,21 @@ module.exports = {
             })
         }
 
-        var chart1h = pair.functions.chart(pairsWatch[0]).ticks
-        var chart15m = pair.functions.chart(pairsWatch[1]).ticks
-        var chart5m = pair.functions.chart(pairsWatch[2]).ticks
+        var chart1h = pair.functions.chart(intervalsWatch[0]).ticks
+        var chart15m = pair.functions.chart(intervalsWatch[1]).ticks
+        var chart5m = pair.functions.chart(intervalsWatch[2]).ticks
 
         if(chart1h.length < 500 || chart15m.length < 500 || chart5m.length < 500) return
 
         var lastClose = parseFloat(chart5m[chart5m.length - 1].close)
-        var rsi5m = indicators.rsi(chart5m, 14, 100, 1)
-        var stoch1h = indicators.stochastic(chart1h, 14, 3)
-        var stoch15m = indicators.stochastic(chart15m, 14, 3)
-        var stoch5m = indicators.stochastic(chart5m, 14, 3)
+        var rsi5m = bp.indicators.rsi(chart5m, 14, 100, 1)
+        var stoch1h = bp.indicators.stochastic(chart1h, 14, 3)
+        var stoch15m = bp.indicators.stochastic(chart15m, 14, 3)
+        var stoch5m = bp.indicators.stochastic(chart5m, 14, 3)
         rsi5m = rsi5m[0]
-        stoch1h = indicators.average(stoch1h)
-        stoch15m = indicators.average(stoch15m)
-        stoch5m = indicators.average(stoch5m)
+        stoch1h = bp.indicators.average(stoch1h)
+        stoch15m = bp.indicators.average(stoch15m)
+        stoch5m = bp.indicators.average(stoch5m)
 
         if(stoch1h < 45 && stoch5m < 20 && ((rsi5m < 26 && stoch15m < 15) || (rsi5m < 21 && stoch15m < 30))) {
             placeOrder(lastClose)
@@ -155,21 +152,21 @@ module.exports = {
         //Wait 3min for order to be traded
         var diffTime = Date.now() - order.timestamp
 
-        if(diffTime > 3 * 60 * 1000 || vars.redAlert) {
+        if(diffTime > 3 * 60 * 1000 || bp.vars.btcAnalysis.dangerZone) {
             var filledAmount = order.amount * pair.partFill
             var boughtPart = order.partFill > 0
-            var enoughForNewOrder = order.partFill * strategy.buyAmountBTC() >= 0.002
+            var enoughForNewOrder = order.partFill * strategy.buyAmountBTC() >= bp.vars.minTradeAmount
 
             if(boughtPart && !enoughForNewOrder) {
                 if(!pair.warningSilent) {
                     pair.warningSilent = true
-                    chatBot.sendMessage("Part bought for " + pair.name + " not enough to be sold. Buy order cancellation will be delayed.")
+                    strategy.sendMessage(pair, "can't cancel order, amount bought not enough to be sold", "warning")
                 }
                 return
             }
 
             pair.processing = true
-            exchUtils.cancelOrder(pair.name, order.id, function(error) {
+            bp.exchUtils.cancelOrder(pair.name, order.id, function(error) {
                 pair.processing = false
                 if(error) {
                     console.log("Error canceling buy order", error)
@@ -190,9 +187,8 @@ module.exports = {
         }
     },
     setupSellOrder: function(strategy, pair) {
-        var sellPrice = parseFloat(pair.sellTarget).toFixed(8)
         pair.processing = true
-        exchUtils.createSellOrder(pair.name, sellPrice, pair.amountToSell, function(error, orderId, filled) {
+        bp.exchUtils.createSellOrder(pair.name, parseFloat(pair.sellTarget).toFixed(8), pair.amountToSell, function(error, orderId, filled) {
             pair.processing = false
 
             if(error) {
@@ -200,7 +196,7 @@ module.exports = {
                 return
             }
 
-            var order = strategy.createOrder(pair.name, orderId, "SELL", sellPrice, pair.amountToSell)
+            var order = strategy.createOrder(pair.name, orderId, "SELL", parseFloat(pair.sellTarget), pair.amountToSell)
 
             if(filled) {
                 pair.amountToSell -= order.amount
@@ -224,7 +220,7 @@ module.exports = {
 
         function recreateSellOrder() {
             pair.processing = true
-            exchUtils.cancelOrder(pair.name, order ? order.id : null, function(error) {
+            bp.exchUtils.cancelOrder(pair.name, order ? order.id : null, function(error) {
                 if(error) {
                     console.log("Error canceling sell order", pair.name, error)
                 }
@@ -234,7 +230,7 @@ module.exports = {
                     order.waiting = false
                 }
 
-                exchUtils.createSellOrder(pair.name, pair.sellTarget, pair.amountToSell, function(error, orderId, filled) {
+                bp.exchUtils.createSellOrder(pair.name, pair.sellTarget, pair.amountToSell, function(error, orderId, filled) {
                     pair.processing = false
                     if(error) {
                         console.log("Error creating sell order", pair.name, error)
@@ -259,15 +255,15 @@ module.exports = {
             return
         }
 
-        var sellOrderAmount = exchUtils.normalizeAmount(pair.name, order.amount * (1 - order.partFill))
-        var amountToSell = exchUtils.normalizeAmount(pair.name, pair.amountToSell)
-        if(sellOrderAmount != amountToSell) {
+        var sellOrderAmount = parseFloat(bp.exchUtils.normalizeAmount(pair.name, order.amount * (1 - order.partFill)))
+        var amountToSell = parseFloat(bp.exchUtils.normalizeAmount(pair.name, pair.amountToSell))
+        if(order.price.toFixed(8) != pair.sellTarget.toFixed(8) || amountToSell > sellOrderAmount) {
             if(pair.trySellTimestamp && Date.now() - pair.trySellTimestamp < 5 * 1000) return
             pair.trySellTimestamp = Date.now()
             recreateSellOrder()
         }
         else {
-            var chart5m = pair.functions.chart(pairsWatch[2]).ticks
+            var chart5m = pair.functions.chart(intervalsWatch[2]).ticks
             var lastClose = parseFloat(chart5m[chart5m.length - 1].close)
 
             var activateStopLoss = strategy.manageStopLoss(pair, lastClose)

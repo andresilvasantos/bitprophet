@@ -25,7 +25,11 @@ module.exports = {
             		}
             		filters.orderTypes = obj.orderTypes;
             		filters.icebergAllowed = obj.icebergAllowed;
-            		vars.pairsInfo[obj.symbol] = filters;
+
+                    vars.pairsInfo[obj.symbol] = {}
+                    vars.pairsInfo[obj.symbol].tokenName = obj.baseAsset
+                    vars.pairsInfo[obj.symbol].marketName = obj.quoteAsset
+            		vars.pairsInfo[obj.symbol].filters = filters;
             	}
             }
 
@@ -83,16 +87,16 @@ module.exports = {
     },
     normalizeAmount: function(pair, amount, price) {
         // Set minimum order amount with minQty
-        if ( amount < vars.pairsInfo[pair].minQty ) amount = vars.pairsInfo[pair].minQty;
+        if ( amount < vars.pairsInfo[pair].filters.minQty ) amount = vars.pairsInfo[pair].filters.minQty;
         // Set minimum order amount with minNotional
-        if (price && price * amount < vars.pairsInfo[pair].minNotional ) {
-            amount = vars.pairsInfo[pair].minNotional / price;
+        if (price && price * amount < vars.pairsInfo[pair].filters.minNotional ) {
+            amount = vars.pairsInfo[pair].filters.minNotional / price;
         }
         // Round to stepSize
-        return binance.roundStep(amount, vars.pairsInfo[pair].stepSize);
+        return binance.roundStep(amount, vars.pairsInfo[pair].filters.stepSize);
     },
     fixPrice: function(pair, price) {
-        var index = String(vars.pairsInfo[pair].tickSize).indexOf("1")
+        var index = String(vars.pairsInfo[pair].filters.tickSize).indexOf("1")
         var count = index - 1
         return parseFloat(price).toFixed(count)
     },
@@ -107,10 +111,6 @@ module.exports = {
                 price = this.fixPrice(pairName, price)
                 binance.buy(pairName, quantity, price, {type:'LIMIT'}, function(error, response) {
                     next(error, response.orderId, quantity, response.status == "FILLED")
-
-                    /*if(!error) {
-                        chatBot.sendMessage('New buy order: ' + pairName + " @ " + price);
-                    }*/
                 });
             }
             else {
@@ -123,9 +123,6 @@ module.exports = {
         price = this.fixPrice(pairName, price)
         binance.sell(pairName, quantity, price, {type:'LIMIT'}, function(error, response) {
             next(error, response.orderId, response.status == "FILLED")
-            /*if(!error) {
-                chatBot.sendMessage('New sell order: ' + pairName + " @ " + price);
-            }*/
         });
     },
     createStopLoss: function(pairName, price, stopPrice, quantity, next) {
@@ -134,9 +131,6 @@ module.exports = {
         price = this.fixPrice(pairName, price)
         binance.sell(pairName, quantity, price, {stopPrice: stopPrice, type: "STOP_LOSS_LIMIT"}, function(error, response) {
             next(error, response.orderId)
-            /*if(!error) {
-                chatBot.sendMessage('New stop loss order: ' + pairName + " @ " + price + " & stop @ " + stopPrice);
-            }*/
         });
     },
     cancelOrder: function(pairName, orderId, next) {

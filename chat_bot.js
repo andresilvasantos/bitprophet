@@ -1,15 +1,26 @@
-var config = require(__dirname + '/config.js')
+var pjson = require(__dirname + '/package.json');
 var vars = require(__dirname + '/vars.js')
 var utils = require(__dirname + '/utils.js')
 var exchUtils = require(__dirname + '/exchange_utils.js')
 var indicators = require(__dirname + '/indicators.js')
 const TelegramBot = require('node-telegram-bot-api');
-const chatBot = new TelegramBot(config.telegram.token, {polling: config.telegram.polling});
 const binance = require('node-binance-api');
 var emoji = require('node-emoji')
+var chatBot
 
 module.exports = {
-    init: function() {
+    init: function(listenChatIdOnly = false) {
+        chatBot = new TelegramBot(vars.options.telegram.token, {polling: true});
+
+        if(listenChatIdOnly) {
+            chatBot.on('message', (msg) => {
+                const chatId = msg.chat.id;
+                console.log("CHAT ID:", chatId)
+                chatBot.sendMessage(chatId, 'CHAT ID: ' + chatId);
+            });
+            return
+        }
+
         chatBot.on('polling_error', function(error) {
             console.log("Telegram error:", error)
         });
@@ -17,14 +28,13 @@ module.exports = {
         chatBot.on('message', (msg) => {
             var message = msg.text.toLowerCase()
             if(message == "status" || message == "st") {
-                //TODO estimated profit last 24h
-                var text = emoji.get("sunglasses") + ' BitProphet v' + vars.version + '\nRunning since ' + utils.formatDate(vars.startTime)
-                if(vars.btcAnalysis.dangerZone) text+= "\n" + emoji.get("triangular_flag_on_post") + " System paused due to BTC"
-                else if(vars.paused) text+= "\n" + emoji.get("coffee") + " System paused"
+                var text = ':sunglasses: BitProphet v' + pjson.version + '\nRunning since ' + utils.formatDate(vars.startTime)
+                if(vars.btcAnalysis.dangerZone) text+= "\n" + ":triangular_flag_on_post: System paused due to BTC"
+                else if(vars.paused) text+= "\n" + ":coffee: System paused"
                 this.sendMessage(text);
             }
             else if(message == "account" || message == "total" || message == "ttl") {
-                this.sendMessage(emoji.get("speech_balloon"));
+                this.sendMessage(":speech_balloon:");
 
                 exchUtils.accountTotalBalance((error, balance) => {
                     if(error) {
@@ -32,13 +42,13 @@ module.exports = {
                         console.log("Error reading total account balance: " + error)
                         return
                     }
-                    this.sendMessage(emoji.get("moneybag") + " Total: " + balance.btcTotal.toFixed(8) + "BTC | " + balance.usdtTotal.toFixed(2) + "$\nBTC available: " +
+                    this.sendMessage(":moneybag: Total: " + balance.btcTotal.toFixed(8) + "BTC | " + balance.usdtTotal.toFixed(2) + "$\nBTC available: " +
                         balance.btcAvailable.toFixed(8) + "\nBNB available: " + balance.bnbAmount.toFixed(2));
                 })
             }
             else if(message == "btc") {
-                this.sendMessage(emoji.get("dollar") + " BTC / USDT: " + vars.btcAnalysis.price.toFixed(2) +
-                    "$\nRSI - 15m: " + vars.btcAnalysis.rsi15m + " | 5m: " + vars.btcAnalysis.rsi5m)
+                this.sendMessage(":dollar: " + vars.pairs["BTCUSDT"].chatName() + ": " + vars.btcAnalysis.price.toFixed(2) +
+                    "$\nRSI - 5m: " + vars.btcAnalysis.rsi5m + " | 15m: " + vars.btcAnalysis.rsi15m)
             }
             else if(message.startsWith("profits") || message.startsWith("%")) {
                 var verbose = false
@@ -49,7 +59,7 @@ module.exports = {
 
                 var totalProfit = 0
                 var totalAccountProfit = 0
-                var profitString = emoji.get("bar_chart") + " Profits\n"
+                var profitString = ":bar_chart: Profits\n"
 
                 for(var i = 0; i < vars.strategies.length; ++i) {
                     var strategy = vars.strategies[i]
@@ -64,7 +74,7 @@ module.exports = {
                         for(var j = 0; j < pairs.length; ++j) {
                             var pair = pairs[j]
                             if(!pair.profit && !pair.accountProfit) continue
-                            profitString += "." + pair.name + ": " + parseFloat(pair.profit).toFixed(2) + "% | " + parseFloat(pair.accountProfit).toFixed(2) + "%\n"
+                            profitString += pair.chatName + ": " + parseFloat(pair.profit).toFixed(2) + "% | " + parseFloat(pair.accountProfit).toFixed(2) + "%\n"
                         }
                     }
                 }
@@ -74,7 +84,7 @@ module.exports = {
                 this.sendMessage(profitString);
             }
             else if(message == "left" || message == "l") {
-                this.sendMessage(emoji.get("speech_balloon"));
+                this.sendMessage(":speech_balloon:");
 
                 var leftPairsStr = ""
 
@@ -100,26 +110,38 @@ module.exports = {
                             var pair = pairs[j]
                             if(!pair.amountToSell) continue
 
+                            var totalBought = strategy.buyTradedInfo(pair).amountMarketPrice
+                            var totalSold = strategy.sellTradedInfo(pair).amountMarketPrice
+                            var sellCurrentPrice = totalSold + (tokens[pair.name] * pair.amountToSell)
+                            var currentProfit = (sellCurrentPrice - totalBought) / totalBought * 100
+                            var fees = (sellCurrentPrice + totalBought) * vars.tradingFees
+                            var currentAccountProfit = (sellCurrentPrice - totalBought - fees) / vars.startBTCAmount * 100
+
+                            var sellTarget = ""
+                            if(pair.sellTarget > 0) {
+                                var sellTargetPercentage = (tokens[pair.name] - pair.sellTarget) / pair.sellTarget * 100
+                                sellTarget = " -> " + exchUtils.fixPrice(pair.name, parseFloat(pair.sellTarget).toFixed(8)) + "[" + sellTargetPercentage.toFixed(2) + "%]"
+                            }
+
                             var spacer = strategyStr.length ? "\n" : ""
-                            var percentage = ((tokens[pair.name] - pair.entryPrice) / pair.entryPrice) * 100
-                            var sellTarget = pair.sellTarget > 0 ? " -> " + exchUtils.fixPrice(pair.name, parseFloat(pair.sellTarget).toFixed(8)) : ""
-                            strategyStr += spacer + "." + pair.name + " " + tokens[pair.name] + "[" + percentage.toFixed(2) + "%]" + sellTarget
+                            strategyStr += spacer + pair.chatName + " " + tokens[pair.name] + "[" + currentProfit.toFixed(2) + "% | " +
+                                currentAccountProfit.toFixed(2) + "%]" + sellTarget
                         }
 
                         if(strategyStr.length) {
-                            strategyStr = emoji.get("barber") + " " + strategy.name() + ":\n" + strategyStr
+                            strategyStr = ":barber: " + strategy.name() + ":\n" + strategyStr
                             leftPairsStr += strategyStr + "\n"
                         }
                     }
-                    if(!leftPairsStr.length) leftPairsStr = emoji.get("ok_hand") + " Nothing left to sell."
+                    if(!leftPairsStr.length) leftPairsStr = ":ok_hand: Nothing left to sell."
                     this.sendMessage(leftPairsStr);
                 })
             }
             else if(message == "pause") {
                 vars.paused = !vars.paused
 
-                if(vars.paused) this.sendMessage(emoji.get("coffee") + " System paused.");
-                else this.sendMessage(emoji.get("thumbsup") + " System resumed.");
+                if(vars.paused) this.sendMessage(":coffee: System paused.");
+                else this.sendMessage(":thumbsup: System resumed.");
             }
             else if(message.startsWith("exit ") || message.startsWith("sell ")) {
                 var split = message.split(" ")
@@ -128,7 +150,7 @@ module.exports = {
                     return
                 }
                 var pairName = split[1]
-                pairName = String(pairName + "BTC").toUpperCase()
+                pairName = pairName.toUpperCase()
 
                 for(var i = 0; i < vars.strategies.length; ++i) {
                     var strategy = vars.strategies[i]
@@ -136,25 +158,26 @@ module.exports = {
 
                     for(var j = 0; j < pairs.length; ++j) {
                         var pair = pairs[j]
-                        if(pair.name != pairName) continue
+                        if(pair.token != pairName && pair.name != pairName) continue
                         if(!pair.amountToSell) continue
 
                         if(split.length == 3) {
-                            var price = parseFloat(split[2]).toFixed(8)
-                            pair.sellTarget = exchUtils.fixPrice(pairName, price)
+                            var price = parseFloat(split[2])
+                            pair.sellTarget = price
                             pair.forceSell = true
-                            this.sendMessage(emoji.get("thumbsup") + " Force sell triggered for " + pairName + "@" + pair.sellTarget);
+                            this.sendMessage(":thumbsup: Force sell triggered for " + pair.chatName + "@" +
+                                parseFloat(exchUtils.fixPrice(pair.name, pair.sellTarget)).toFixed(8));
                         }
                         else {
-                            binance.prices(pairName, (error, ticker) => {
+                            binance.prices(pair.name, (error, ticker) => {
                                 if(error) {
-                                    this.sendMessage('Error fetching prices for ' + pairName);
-                                    console.log("Error fetching price for", pairName, error)
+                                    this.sendMessage('Error fetching prices for ' + pair.chatName);
+                                    console.log("Error fetching price for", pair.name, error)
                                     return
                                 }
-                                pair.sellTarget = ticker[pairName]
+                                pair.sellTarget = parseFloat(ticker[pair.name])
                                 pair.forceSell = true
-                                this.sendMessage(emoji.get("thumbsup") + " Force sell triggered for " + pairName + "@" + pair.sellTarget);
+                                this.sendMessage(":thumbsup: Force sell triggered for " + pair.chatName + "@" + pair.sellTarget);
                             });
                         }
 
@@ -162,7 +185,7 @@ module.exports = {
                     }
                 }
 
-                this.sendMessage(emoji.get("grey_question") + " " + pairName + " - no trading pair found");
+                this.sendMessage(":grey_question: " + pairName + " - no trading pair found");
             }
             else if(message.startsWith("cancel ") || message.startsWith("ignore ")) {
                 var split = message.split(" ")
@@ -171,7 +194,7 @@ module.exports = {
                     return
                 }
                 var pairName = split[1]
-                pairName = String(pairName + "BTC").toUpperCase()
+                pairName = pairName.toUpperCase()
 
                 for(var i = 0; i < vars.strategies.length; ++i) {
                     var strategy = vars.strategies[i]
@@ -179,14 +202,14 @@ module.exports = {
 
                     for(var j = 0; j < pairs.length; ++j) {
                         var pair = pairs[j]
-                        if(pair.name != pairName) continue
-                        this.sendMessage(emoji.get("thumbsup") + " Trade canceled for " + pairName);
-                        strategy.resetPairData(pairName)
+                        if(pair.token != pairName && pair.name != pairName) continue
+                        this.sendMessage(":thumbsup: Trade canceled for " + pair.chatName);
+                        strategy.resetPairData(pair.name)
                         return
                     }
                 }
 
-                this.sendMessage(emoji.get("grey_question") + " " + pairName + " - no trading pair found");
+                this.sendMessage(":grey_question: " + pairName + " - no trading pair found");
             }
             else if(message.startsWith("start ") || message.startsWith("stop ") || message.startsWith("reload ")) {
                 var split = message.split(" ")
@@ -207,7 +230,7 @@ module.exports = {
                 }
 
                 if(!strategy) {
-                    this.sendMessage(emoji.get("grey_question") + ' No strategy found with id ' + strategyId);
+                    this.sendMessage(':grey_question: No strategy found with id ' + strategyId);
                     return
                 }
 
@@ -217,7 +240,7 @@ module.exports = {
                         return
                     }
                     strategy.setActive(true)
-                    this.sendMessage(emoji.get("large_orange_diamond") + " " + strategy.name() + ' started');
+                    this.sendMessage(":large_orange_diamond: " + strategy.name() + ' started');
                 }
                 else if(action == "stop") {
                     if(!strategy.active()) {
@@ -225,7 +248,7 @@ module.exports = {
                         return
                     }
                     strategy.setActive(false)
-                    this.sendMessage(emoji.get("ghost") + " " + strategy.name() + ' stopped');
+                    this.sendMessage(":ghost: " + strategy.name() + ' stopped');
                 }
                 else if(action == "reload") {
                     if(strategy.active()) {
@@ -254,14 +277,14 @@ module.exports = {
                             var tradingPairNames = []
                             for(var i = 0; i < tradingPairs.length; ++i) {
                                 var tradingPair = tradingPairs[i]
-                                tradingPairNames.push(tradingPair.name)
+                                tradingPairNames.push(tradingPair.chatName)
                             }
 
                             var validPairs = strategy.validPairs()
                             var validPairNames = []
                             for(var i = 0; i < validPairs.length; ++i) {
                                 var validPair = validPairs[i]
-                                validPairNames.push(validPair.name)
+                                validPairNames.push(validPair.chatName)
                             }
 
                             tradingPairNames.sort()
@@ -269,23 +292,23 @@ module.exports = {
 
                             for(var i = 0; i < tradingPairNames.length; ++i) {
                                 if(messageTrading.length) messageTrading += "\n"
-                                messageTrading += "." + tradingPairNames[i]
+                                messageTrading += tradingPairNames[i]
                             }
 
                             for(var i = 0; i < validPairNames.length; ++i) {
                                 if(messageValid.length) messageValid += "\n"
-                                messageValid += "." + validPairNames[i]
+                                messageValid += validPairNames[i]
                             }
 
                             if(messageTrading.length) messageTrading = "Trading Pairs [" + tradingPairNames.length + "]:\n" + messageTrading + "\n"
                             if(messageValid.length) messageValid = "Valid Pairs [" + validPairNames.length + "]:\n" + messageValid
 
-                            this.sendMessage(emoji.get("page_with_curl") + " " + strategy.name() + "\n" + messageTrading + messageValid);
+                            this.sendMessage(":page_with_curl: " + strategy.name() + "\n" + messageTrading + messageValid);
                             return
                         }
                     }
 
-                    this.sendMessage(emoji.get("grey_question") + ' No strategy found with id ' + strategyId);
+                    this.sendMessage(':grey_question: No strategy found with id ' + strategyId);
                 }
                 else {
                     var messageStarted = ""
@@ -307,7 +330,7 @@ module.exports = {
                     if(messageStarted.length) messageStarted = "Started:\n" + messageStarted + "\n"
                     if(messageStopped.length) messageStopped = "Stopped:\n" + messageStopped
 
-                    this.sendMessage(emoji.get("page_with_curl") + " Strategies\n" + messageStarted + messageStopped);
+                    this.sendMessage(":page_with_curl: Strategies\n" + messageStarted + messageStopped);
                 }
             }
             else if(message == "restart") {
@@ -326,7 +349,7 @@ module.exports = {
 
                 if(totalAccountProfit > 0) {
                     var messages = ["Thank you, sir", "Just doing what I know best, sir", "To you too sir", "Enjoy your money sir",
-                        emoji.get("relaxed") + emoji.get("v") + emoji.get("moneybag") + emoji.get("tada") + emoji.get("champagne")]
+                        ":relaxed::v::moneybag::tada::champagne:"]
                     this.sendMessage(messages[Math.floor(Math.random() * messages.length)]);
                 }
                 else if(totalAccountProfit == 0) {
@@ -334,7 +357,7 @@ module.exports = {
                     this.sendMessage(messages[Math.floor(Math.random() * messages.length)]);
                 }
                 else {
-                    var messages = [emoji.get("cry"), emoji.get("sweat_smile"), "Not my fault sir", "You know that hurts, don't you sir?"]
+                    var messages = [":cry:", ":sweat_smile:", "Not my fault sir", "You know that hurts, don't you sir?"]
                     this.sendMessage(messages[Math.floor(Math.random() * messages.length)]);
                 }
             }
@@ -348,12 +371,12 @@ module.exports = {
                 this.sendMessage(messages[Math.floor(Math.random() * messages.length)]);
             }
             else {
-                var messages = ["Sorry, I can't understand you sir. " + emoji.get("heart"), "Sorry, no can do sir.", "Chinese now sir?"]
+                var messages = ["Sorry, I can't understand you sir. :heart:", "Sorry, no can do sir.", "Chinese now sir?"]
                 this.sendMessage(messages[Math.floor(Math.random() * messages.length)]);
             }
         });
     },
     sendMessage: function(message) {
-        chatBot.sendMessage(config.telegram.channelId, message);
+        chatBot.sendMessage(vars.options.telegram.chatId, emoji.emojify(message));
     },
 }

@@ -1,21 +1,25 @@
 {
   "name": "bitprophet",
-  "version": "0.3.3",
-  "description": "Crypto currency automated trading platform for Binance.",
+  "version": "0.3.8",
+  "description": "Crypto trading platform for Binance that uses Telegram as interface",
   "main": "bitprophet.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "repository": {
     "type": "git",
-    "url": "git+https://andresilvasantos@bitbucket.org/andresilvasantos/bitprophet.git"
+    "url": "git+https://github.com/andresilvasantos/bitprophet.git"
   },
-  "author": "Andre Santos",
+  "author": "Andre Santos <andresantos@theonepixel.com>",
   "license": "CC-BY-NC-ND-3.0",
+  "keywords": [
+       "crypto",
+       "trading",
+       "exchange",
+       "alerts",
+       "notifications",
+       "bitcoin"
+     ],
   "dependencies": {
     "node-binance-api": "^0.4.22",
-    "node-emoji": "^1.8.1",
-    "node-telegram-bot-api": "^0.30.0"
-  },
-  "devDependencies": {}
+    "node-telegram-bot-api": "^0.30.0",
+    "node-emoji": "^1.8.1"
+  }
 }

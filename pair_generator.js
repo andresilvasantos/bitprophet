@@ -1,8 +1,9 @@
 const exchUtils = require('./exchange_utils.js')
 
 module.exports = {
-    create: function(pairName) {
-        var _name = pairName
+    create: function(tokenName, marketName) {
+        var _tokenName = tokenName
+        var _marketName = marketName
 
         var _charts = {}
 
@@ -10,7 +11,19 @@ module.exports = {
         var _accountProfit = 0
 
         this.name = function() {
-            return _name
+            return _tokenName + _marketName
+        }
+
+        this.tokenName = function() {
+            return _tokenName
+        }
+
+        this.marketName = function() {
+            return _marketName
+        }
+
+        this.chatName = function() {
+            return "#" + _tokenName.toUpperCase() + "/" + _marketName.toUpperCase()
         }
 
         this.chart = function(interval) {
@@ -61,7 +74,7 @@ module.exports = {
             }
 
             _charts[interval].loading = true
-            exchUtils.chartUpdate(_name, interval, function(error, pairName, ticks) {
+            exchUtils.chartUpdate(this.name(), interval, function(error, pairName, ticks) {
                 if(error) {
                     console.log("Error fetching candlesticks", pairName, error)
                     _charts[interval].loading = false
@@ -96,7 +109,7 @@ module.exports = {
             }
 
             _charts[interval].loading = true
-            exchUtils.startChartUpdate(_name, interval, function(pairName, interval, chart) {
+            exchUtils.startChartUpdate(this.name(), interval, function(pairName, interval, chart) {
                 var timestamps = Object.keys(chart)
                 timestamps.sort()
 
@@ -114,7 +127,7 @@ module.exports = {
         }
 
         this.stopChartUpdates = function(interval) {
-            var websocketName = _name.toLowerCase() + "@" + "kline_" + interval
+            var websocketName = this.name().toLowerCase() + "@" + "kline_" + interval
             exchUtils.terminateWebsocket(websocketName)
         }
 
@@ -156,7 +169,7 @@ module.exports = {
             var allActive = true
             for(var i = 0; i < intervals.length; ++i) {
                 var interval = intervals[i]
-                var websocketName = _name.toLowerCase() + "@" + "kline_" + interval
+                var websocketName = this.name().toLowerCase() + "@" + "kline_" + interval
                 if(!exchUtils.websocketActive(websocketName) || _charts[interval].loading) {
                     allActive = false
                     break
