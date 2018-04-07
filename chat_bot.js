@@ -29,7 +29,7 @@ module.exports = {
             var message = msg.text.toLowerCase()
             if(message == "status" || message == "st") {
                 var text = ':sunglasses: BitProphet v' + pjson.version + '\nRunning since ' + utils.formatDate(vars.startTime)
-                if(vars.btcAnalysis.dangerZone) text+= "\n" + ":triangular_flag_on_post: System paused due to BTC"
+                if(vars.btcAnalysis.dangerZone && vars.options.pauseDangerBTC) text+= "\n" + ":triangular_flag_on_post: System paused due to BTC"
                 else if(vars.paused) text+= "\n" + ":coffee: System paused"
                 this.sendMessage(text);
             }

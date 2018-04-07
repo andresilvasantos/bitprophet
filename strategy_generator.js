@@ -130,7 +130,7 @@ module.exports = {
                 var pairData = this.pairData(pair.name())
                 var blackFlagTime = currentTime - pairData.blackFlagTime
 
-                if(pairData.processing || (pairData.status <= 0 && (vars.paused || /*vars.btcAnalysis.dangerZone ||*/
+                if(pairData.processing || (pairData.status <= 0 && (vars.paused || (vars.btcAnalysis.dangerZone && vars.options.pauseDangerBTC) ||
                     this.tradingPairs().length >= _maxTradingPairs || blackFlagTime < 15 * 60 * 1000))) continue
 
                 if(pairData.status <= 0) {

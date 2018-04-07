@@ -10,6 +10,7 @@ module.exports = function() {
     var strategyManager = require(__dirname + '/strategy_manager.js')
     const binance = require('node-binance-api');
     const default_options = {
+        pauseDangerBTC: true,
         mainLoopTimer: 1500,
         strategiesDir: __dirname + '/strategies',
     }
@@ -228,8 +229,9 @@ module.exports = function() {
         exchUtils: exchUtils,
         indicators: indicators,
         options: function(opt) {
-            if(opt.strategiesDir) options.strategiesDir = opt.strategiesDir
-            if(opt.mainLoopTimer) options.mainLoopTimer = opt.mainLoopTimer
+            if(typeof opt.strategiesDir === "string") options.strategiesDir = opt.strategiesDir
+            if(typeof opt.mainLoopTimer === "number") options.mainLoopTimer = opt.mainLoopTimer
+            if(typeof opt.pauseDangerBTC === "boolean") options.pauseDangerBTC = opt.pauseDangerBTC
             options.binance = opt.binance
             options.telegram = opt.telegram
             vars.options = options
