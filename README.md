@@ -89,18 +89,18 @@ Create your strategies based on the examples.
 
 #### Telegram BitProphet Cheat Sheet
 
-__status__ / __st__ - Check BitProphet's version and status
-__account__ / __total__ / __ttl__ - Total balance in BTC and USDT, plus BNB amount
-__btc__ - BTC value
-__profits__ / __%__ - Profits
-__profits +__ / __% +__ - Profits detailed
-__left__ / __l__ - Trades left
-__pause__ - Pause system (ongoing trades won't be paused)
-__exit token__ / __sell token__ - Sells token, if it's currently trading
-__exit token price__ / __sell token price__ - Sells token@price, if it's currently trading
-__cancel token__ / __ignore token__ - Cancel currently trading token
-__start strategyId__ - Starts strategy
-__stop strategyId__ - Stops strategy
-__list__ - Lists all strategies
-__list strategyId__ - Lists all valid / trading pairs for the given strategy
-__restart__ - Kills the platform. Useful when using a keep alive process manager like [pm2](https://github.com/Unitech/pm2).
+* __status__ / __st__ - Check BitProphet's version and status
+* __account__ / __total__ / __ttl__ - Total balance in BTC and USDT, plus BNB amount
+* __btc__ - BTC value
+* __profits__ / __%__ - Profits
+* __profits +__ / __% +__ - Profits detailed
+* __left__ / __l__ - Trades left
+* __pause__ - Pause system (ongoing trades won't be paused)
+* __exit token__ / __sell token__ - Sells token, if it's currently trading
+* __exit token price__ / __sell token price__ - Sells token@price, if it's currently trading
+* __cancel token__ / __ignore token__ - Cancel currently trading token
+* __start strategyId__ - Starts strategy
+* __stop strategyId__ - Stops strategy
+* __list__ - Lists all strategies
+* __list strategyId__ - Lists all valid / trading pairs for the given strategy
+* __restart__ - Kills the platform. Useful when using a keep alive process manager like [pm2](https://github.com/Unitech/pm2).
