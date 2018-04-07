@@ -149,7 +149,7 @@ module.exports = {
             }
         }
 
-        this.manageStopLoss = function(pairData, lastClose, trailing = 1) {
+        this.manageStopLoss = function(pairData, lastClose, trailingType = 2, trailingPercentage = 0.006, sellPriceDistance = 0.001) {
             var diffPercentage = (lastClose - pairData.entryPrice) / pairData.entryPrice * 100
 
             if(lastClose < pairData.stopLoss.sellPrice && lastClose < pairData.stopLoss.stopPrice) {
@@ -164,17 +164,20 @@ module.exports = {
                 return true
             }
 
-            if(trailing == 0) {
-                if(lastClose / pairData.entryPrice >= 1.006 && pairData.stopLoss.sellPrice < pairData.entryPrice) {
-                    pairData.stopLoss.stopPrice = pairData.entryPrice * 1.001
+            switch(trailingType) {
+            case 0:
+            default:
+                break
+            case 1:
+                if(lastClose / pairData.entryPrice >= (1 + trailingPercentage) && pairData.stopLoss.sellPrice < pairData.entryPrice) {
+                    pairData.stopLoss.stopPrice = pairData.entryPrice * (1 + sellPriceDistance)
                     pairData.stopLoss.sellPrice = pairData.entryPrice
                     this.sendMessage(pairData, "stop loss adjusted to 0.0%", "point_up")
                 }
-            }
-            else if(trailing == 1) {
-                if(pairData.entryPrice < lastClose / 1.006 && pairData.stopLoss.stopPrice < lastClose / 1.006) {
-                    pairData.stopLoss.stopPrice = lastClose / 1.006
-                    pairData.stopLoss.sellPrice = lastClose / 1.009
+            case 2:
+                if(pairData.entryPrice < lastClose / (1 + trailingPercentage) && pairData.stopLoss.stopPrice < lastClose / (1 + trailingPercentage)) {
+                    pairData.stopLoss.stopPrice = lastClose / (1 + trailingPercentage)
+                    pairData.stopLoss.sellPrice = lastClose / (1 + trailingPercentage + sellPriceDistance)
 
                     var percentage = (pairData.stopLoss.stopPrice / pairData.entryPrice - 1) * 100
                     this.sendMessage(pairData, "stop loss adjusted to " + percentage.toFixed(2) + "%", "point_up")

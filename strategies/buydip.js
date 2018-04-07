@@ -39,14 +39,7 @@ module.exports = {
         var stoch5m = bp.indicators.stochastic(chart5m, 14, 24)
         var stoch5mAvg = bp.indicators.average(stoch5m)
         var maxDiff5m = bp.indicators.measureMaxDiff(chart5m, 120)
-
-        var volume24h = 0
-        for(var i = chart1h.length - 24; i < chart1h.length; ++i) {
-            var high = parseFloat(chart1h[i].high)
-            var low = parseFloat(chart1h[i].low)
-            var avgPrice = (high - low) / 2. + low
-            volume24h += parseFloat(chart1h[i].volume) * avgPrice
-        }
+        var volume24h = bp.indicators.volume24h(chart1h, 60)
 
         setPairValid(volume24h >= 100 && stoch1hAvg > 30 && stoch5mAvg >= 20 && maxDiff5m < 100)
     },

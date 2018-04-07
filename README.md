@@ -29,7 +29,7 @@ In order to find out the group id you've just created, run node with the followi
 const bitprophet = require('bitprophet')
 bitprophet.options({
     telegram: {
-        token: YOUR_TELEGRAM_BOT_TOKEN
+        token: "YOUR_TELEGRAM_BOT_TOKEN"
     }
 })
 bitprophet.listenToTelegramChatId()
@@ -44,12 +44,12 @@ This is the code to start BitProphet. If the only thing you need is to be notifi
 const bitprophet = require('bitprophet')
 bitprophet.options({
     binance: {
-        key: YOUR_BINANCE_API_KEY,
-        secret: YOUR_BINANCE_API_SECRET
+        key: "YOUR_BINANCE_API_KEY",
+        secret: "YOUR_BINANCE_API_SECRET"
     },
     telegram: {
-        chatId: YOUR_TELEGRAM_GROUP_ID,
-        token: YOUR_TELEGRAM_BOT_TOKEN
+        chatId: "YOUR_TELEGRAM_GROUP_ID",
+        token: "YOUR_TELEGRAM_BOT_TOKEN"
     }
 })
 
