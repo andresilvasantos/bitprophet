@@ -1,3 +1,5 @@
+[![NPM](https://nodei.co/npm/bitprophet.png?compact=true)](https://npmjs.org/package/bitprophet)
+
 # BitProphet
 BitProphet is a node crypto trading platform for Binance exchange that uses Telegram as the interface. Its main purpose is the automation of trading techniques, but it can also be used as a simple order notification tracker or as an alert system for the most used technical indicators.
 Suggestions and pull requests are very welcome!
