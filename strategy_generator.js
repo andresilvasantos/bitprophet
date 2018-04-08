@@ -270,6 +270,7 @@ module.exports = {
             order.id = orderId
             order.side = side
             order.price = price
+            order.priceTraded = price
             order.amount = amount
             order.stopLoss = stopLoss
             order.timestamp = Date.now()
@@ -345,12 +346,12 @@ module.exports = {
 
                 if(order.partFill) {
                     if(avgBoughtPrice == -1) {
-                        avgBoughtPrice = order.price
+                        avgBoughtPrice = order.priceTraded
                         boughtAmount = order.partFill * order.amount
                     }
                     else {
                         var amount = (order.partFill * order.amount)
-                        avgBoughtPrice = (boughtAmount * avgBoughtPrice + amount * order.price) / (boughtAmount + amount)
+                        avgBoughtPrice = (boughtAmount * avgBoughtPrice + amount * order.priceTraded) / (boughtAmount + amount)
                         boughtAmount += order.partFill * order.amount
                     }
                 }
@@ -370,12 +371,12 @@ module.exports = {
 
                 if(order.partFill) {
                     if(avgSoldPrice == -1) {
-                        avgSoldPrice = order.price
+                        avgSoldPrice = order.priceTraded
                         soldAmount = order.partFill * order.amount
                     }
                     else {
                         var amount = (order.partFill * order.amount)
-                        avgSoldPrice = (soldAmount * avgSoldPrice + amount * order.price) / (soldAmount + amount)
+                        avgSoldPrice = (soldAmount * avgSoldPrice + amount * order.priceTraded) / (soldAmount + amount)
                         soldAmount += order.partFill * order.amount
                     }
                 }

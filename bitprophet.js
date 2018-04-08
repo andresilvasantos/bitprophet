@@ -13,6 +13,7 @@ module.exports = function() {
         pauseDangerBTC: true,
         mainLoopTimer: 1500,
         strategiesDir: __dirname + '/strategies',
+        verbose: true
     }
     var options = default_options;
 
@@ -46,7 +47,7 @@ module.exports = function() {
     	}
     }
     function execution_update(data) {
-    	let { x:executionType, s:symbol, p:price, q:quantity, S:side, o:orderType, i:orderId, X:orderStatus, z:filledQuantity } = data;
+    	let { x:executionType, s:symbol, L:price, q:quantity, S:side, o:orderType, i:orderId, X:orderStatus, z:filledQuantity } = data;
 
         var automatedOrder = false
         var traded = executionType == "TRADE"
@@ -77,6 +78,7 @@ module.exports = function() {
                     pair.amountToSell -= (1 - order.partFill) * parseFloat(quantity)
                 }
 
+                order.priceTraded = order.partFill * order.priceTraded + (1 - order.partFill) * parseFloat(price)
                 order.partFill = 1
             }
             else if(traded && filled < 1) {
@@ -87,6 +89,7 @@ module.exports = function() {
                     pair.amountToSell -= (filled - order.partFill) * parseFloat(quantity)
                 }
 
+                order.priceTraded = (order.partFill * order.priceTraded + (filled - order.partFill) * parseFloat(price)) / filled
                 order.partFill = filled
             }
             else if(canceled) {
@@ -232,6 +235,7 @@ module.exports = function() {
             if(typeof opt.strategiesDir === "string") options.strategiesDir = opt.strategiesDir
             if(typeof opt.mainLoopTimer === "number") options.mainLoopTimer = opt.mainLoopTimer
             if(typeof opt.pauseDangerBTC === "boolean") options.pauseDangerBTC = opt.pauseDangerBTC
+            if(typeof opt.verbose === "boolean") options.verbose = opt.verbose
             options.binance = opt.binance
             options.telegram = opt.telegram
             vars.options = options
@@ -247,18 +251,23 @@ module.exports = function() {
               reconnect: false
             });
 
+            var oldLog = console.log;
+            console.log = function (message) {
+                if(vars.options.verbose) oldLog.apply(console, arguments);
+            };
+
             exchUtils.initExchangeInfo(function(error) {
                 if(error) {
                     console.log("Error initializing exchange info.", error)
-                    next("Error initializing exchange info.")
-                    process.exit(1)
+                    if(next) next("Error initializing exchange info.")
+                    return
                 }
 
                 exchUtils.accountTotalBalance(function(error, balance) {
                     if(error) {
                         console.log("Error reading total account balance: " + error)
-                        next("Error reading total account balance.")
-                        process.exit(1)
+                        if(next) next("Error reading total account balance.")
+                        return
                     }
 
                     vars.startBTCAmount = balance.btcTotal.toFixed(8)
