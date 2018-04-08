@@ -9,7 +9,7 @@ var emoji = require('node-emoji')
 var chatBot
 var lastMessageTimestamp = 0
 var messageQueue = []
-var minIntervalSendMessage = 200
+var minIntervalSendMessage = 1200
 
 module.exports = {
     init: function(listenChatIdOnly = false) {
@@ -383,12 +383,12 @@ module.exports = {
         if(Date.now() - lastMessageTimestamp < minIntervalSendMessage || messageQueue.length) {
             //If this is the first message to be added to the queue, start the timer
             if(!messageQueue.length) {
-                setInterval(function() {
+                var interval = setInterval(function() {
                     var message = messageQueue[0]
                     chatBot.sendMessage(vars.options.telegram.chatId, emoji.emojify(message));
                     lastMessageTimestamp = Date.now()
                     messageQueue.shift();
-                    if(!messageQueue.length) clearInterval()
+                    if(!messageQueue.length) clearInterval(interval)
                 }, minIntervalSendMessage)
             }
 
