@@ -47,13 +47,14 @@ module.exports = function() {
     	}
     }
     function execution_update(data) {
-    	let { x:executionType, s:symbol, L:price, q:quantity, S:side, o:orderType, i:orderId, X:orderStatus, z:filledQuantity } = data;
+    	let { x:executionType, s:symbol, p:price, L:priceTraded, q:quantity, S:side, o:orderType, i:orderId, X:orderStatus, z:filledQuantity } = data;
 
         var automatedOrder = false
         var traded = executionType == "TRADE"
         var isNew = executionType == "NEW"
         var canceled = executionType == "CANCELED"
         var filled = parseFloat(filledQuantity) / parseFloat(quantity)
+        if(traded) price = priceTraded
 
         var strategy = null
         var pair = null
