@@ -36,9 +36,9 @@ module.exports = {
             next(error)
         });
     },
-    balances: function(next) {
+    balance: function(token, next) {
         binance.balance((error, balances) => {
-            next(error, balances)
+            next(error, balances[token])
         })
     },
     accountTotalBalance: function(next) {
