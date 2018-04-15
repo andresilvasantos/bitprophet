@@ -333,12 +333,13 @@ module.exports = {
                 }
 
                 if(balance.available > amountMarket) {
+                    var that = this
                     exchUtils.createLimitOrder(pair.name, true, price, parseFloat(amountMarket / price), function(error, orderId, quantity, filled) {
                         pair.processing = false
 
                         var order = null
                         if(!error) {
-                            order = this.createOrder(pair.name, orderId, "BUY", parseFloat(price), parseFloat(quantity))
+                            order = that.createOrder(pair.name, orderId, "BUY", parseFloat(price), parseFloat(quantity))
                             if(filled) {
                                 order.partFill = 1
                                 order.priceTraded = parseFloat(price)
@@ -372,11 +373,12 @@ module.exports = {
             }
 
             pair.processing = true
+            var that = this
             exchUtils.createLimitOrder(pair.name, false, price, quantity, function(error, orderId, quantity, filled) {
                 pair.processing = false
                 var order = null
                 if(!error) {
-                    order = this.createOrder(pair.name, orderId, "SELL", parseFloat(price), parseFloat(quantity))
+                    order = that.createOrder(pair.name, orderId, "SELL", parseFloat(price), parseFloat(quantity))
                     if(filled) {
                         order.partFill = 1
                         order.priceTraded = parseFloat(price)
