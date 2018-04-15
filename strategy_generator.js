@@ -324,6 +324,7 @@ module.exports = {
                 return
             }
 
+            var that = this
             pair.processing = true
             exchUtils.balance(pair.market, function(error, balance) {
                 if(error) {
@@ -333,7 +334,6 @@ module.exports = {
                 }
 
                 if(balance.available > amountMarket) {
-                    var that = this
                     exchUtils.createLimitOrder(pair.name, true, price, parseFloat(amountMarket / price), function(error, orderId, quantity, filled) {
                         pair.processing = false
 
@@ -372,8 +372,8 @@ module.exports = {
                 return
             }
 
-            pair.processing = true
             var that = this
+            pair.processing = true
             exchUtils.createLimitOrder(pair.name, false, price, quantity, function(error, orderId, quantity, filled) {
                 pair.processing = false
                 var order = null
