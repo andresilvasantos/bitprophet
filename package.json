@@ -1,6 +1,6 @@
 {
   "name": "bitprophet",
-  "version": "0.3.13",
+  "version": "0.4.0",
   "description": "Crypto trading platform for Binance that uses Telegram as interface",
   "main": "bitprophet.js",
   "repository": {
@@ -18,8 +18,9 @@
     "bitcoin"
   ],
   "dependencies": {
-    "node-binance-api": "^0.4.22",
+    "node-binance-api": "^0.4.28",
+    "node-emoji": "^1.8.1",
     "node-telegram-bot-api": "^0.30.0",
-    "node-emoji": "^1.8.1"
+    "shortid": "^2.2.8"
   }
 }

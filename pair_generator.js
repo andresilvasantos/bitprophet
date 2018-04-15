@@ -5,6 +5,7 @@ module.exports = {
         var _tokenName = tokenName
         var _marketName = marketName
 
+        var _lastPrice = 0
         var _charts = {}
 
         var _profit = 0
@@ -24,6 +25,10 @@ module.exports = {
 
         this.chatName = function() {
             return "#" + _tokenName.toUpperCase() + "/" + _marketName.toUpperCase()
+        }
+
+        this.lastPrice = function() {
+            return _lastPrice
         }
 
         this.chart = function(interval) {
@@ -96,6 +101,7 @@ module.exports = {
                 _charts[interval].ticks = ticksArray
                 _charts[interval].timestamp = Date.now()
                 _charts[interval].loading = false
+                if(ticksArray.length) _lastPrice = ticksArray[ticksArray.length - 1].close
 
                 if(next) next(error, _charts[interval].ticks)
             })
@@ -123,6 +129,8 @@ module.exports = {
                 _charts[interval].ticks = newTicks
                 _charts[interval].timestamp = Date.now()
                 _charts[interval].loading = false
+
+                if(newTicks.length) _lastPrice = newTicks[newTicks.length - 1].close
             })
         }
 

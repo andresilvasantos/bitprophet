@@ -36,6 +36,11 @@ module.exports = {
             next(error)
         });
     },
+    balances: function(next) {
+        binance.balance((error, balances) => {
+            next(error, balances)
+        })
+    },
     accountTotalBalance: function(next) {
         var tokens = {}
         binance.prices((error, ticker) => {
@@ -100,59 +105,43 @@ module.exports = {
         var count = index - 1
         return parseFloat(price).toFixed(count)
     },
-    createBuyOrder: function(pairName, price, amountBTC, next) {
-        binance.balance((error, balances) => {
-            if(error) {
-                next("Error reading balances: " + error)
-                return
-            }
-            if(balances.BTC.available > amountBTC) {
-                var quantity = this.normalizeAmount(pairName, parseFloat(amountBTC / price), price)
-                price = this.fixPrice(pairName, price)
-                binance.buy(pairName, quantity, price, {type:'LIMIT'}, function(error, response) {
-                    next(error, response.orderId, quantity, response.status == "FILLED")
-                });
-            }
-            else {
-                next("Not enough BTC available: " + balances.BTC.available)
-            }
-        });
-    },
-    createSellOrder: function(pairName, price, quantity, next) {
+    createLimitOrder: function(pairName, sideBuy, price, quantity, next) {
         quantity = this.normalizeAmount(pairName, quantity, price)
         price = this.fixPrice(pairName, price)
-        binance.sell(pairName, quantity, price, {type:'LIMIT'}, function(error, response) {
-            next(error, response.orderId, response.status == "FILLED")
-        });
+
+        //BUY
+        if(sideBuy) {
+            binance.buy(pairName, quantity, price, {type:'LIMIT'}, function(error, response) {
+                next(error, response.orderId, quantity, response.status == "FILLED")
+            });
+        }
+        //SELL
+        else {
+            binance.sell(pairName, quantity, price, {type:'LIMIT'}, function(error, response) {
+                next(error, response.orderId, quantity, response.status == "FILLED")
+            });
+        }
     },
-    createStopLoss: function(pairName, price, stopPrice, quantity, next) {
+    createStopLimitOrder: function(pairName, sideBuy, price, stopPrice, quantity, next) {
         quantity = this.normalizeAmount(pairName, quantity, price)
+        price = this.fixPrice(pairName, price)
         stopPrice = this.fixPrice(pairName, stopPrice)
-        price = this.fixPrice(pairName, price)
-        binance.sell(pairName, quantity, price, {stopPrice: stopPrice, type: "STOP_LOSS_LIMIT"}, function(error, response) {
-            next(error, response.orderId)
-        });
+
+        //BUY
+        if(sideBuy) {
+            binance.buy(pairName, quantity, price, {stopPrice: stopPrice, type: "STOP_LOSS_LIMIT"}, function(error, response) {
+                next(error, response.orderId, quantity)
+            });
+        }
+        //SELL
+        else {
+            binance.sell(pairName, quantity, price, {stopPrice: stopPrice, type: "STOP_LOSS_LIMIT"}, function(error, response) {
+                next(error, response.orderId, quantity)
+            });
+        }
     },
     cancelOrder: function(pairName, orderId, next) {
-        var targetOrder = null
-        for(var i = 0; i < vars.strategies.length; ++i) {
-            var strategy = vars.strategies[i]
-            targetOrder = strategy.orderById(pairName, orderId)
-            if(!targetOrder) continue
-            break
-        }
-
-        if(!targetOrder) {
-            return(next("Error: order with id " + orderId + " not found for " + pairName))
-        }
-
-        if(targetOrder.canceled) {
-            return(next(null))
-        }
-        targetOrder.automatedCancel = true
-
         binance.cancel(pairName, orderId, function(error, response, symbol) {
-            if(error) targetOrder.automatedCancel = false
             next(error)
         })
     },

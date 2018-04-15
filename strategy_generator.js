@@ -2,6 +2,7 @@ var vars = require(__dirname + '/vars.js')
 var exchUtils = require(__dirname + '/exchange_utils.js')
 const chatBot = require(__dirname + '/chat_bot.js')
 const path = require('path')
+const shortid = require('shortid');
 
 module.exports = {
     create: function(strategyId, strategyName, strategiesDir) {
@@ -10,7 +11,8 @@ module.exports = {
         var _active = false
         var _targetMarket = ""
         var _targetTokens = []
-        var _buyAmountBTC = 0
+        var _paperTrading = false
+        var _buyAmountMarket = 0
         var _buyPercentageAccount = 0
         var _profitTarget = 0
         var _maxLoss = 0
@@ -48,13 +50,21 @@ module.exports = {
             else _targetTokens = targetTokens
         }
 
-        this.buyAmountBTC = function() {
-            if(_buyPercentageAccount > 0) return vars.startBTCAmount * _buyPercentageAccount
-            else return _buyAmountBTC
+        this.paperTrading = function() {
+            return _paperTrading
         }
 
-        this.setBuyAmountBTC = function(amount) {
-            _buyAmountBTC = amount
+        this.setPaperTrading = function(paperTrading) {
+            _paperTrading = paperTrading
+        }
+
+        this.buyAmountMarket = function() {
+            if(_buyPercentageAccount > 0) return vars.startBTCAmount * _buyPercentageAccount
+            else return _buyAmountMarket
+        }
+
+        this.setBuyAmountMarket = function(amount) {
+            _buyAmountMarket = amount
         }
 
         this.setBuyPercentageAccount = function(percentageAccount) {
@@ -83,10 +93,6 @@ module.exports = {
 
         this.setMaxTradingPairs = function(maxTradingPairs) {
             _maxTradingPairs = maxTradingPairs
-        }
-
-        this.reloadSource = function() {
-            _source = require(__dirname + '/strategy_' + _id + '.js')
         }
 
         this.pairs = function() {
@@ -145,6 +151,39 @@ module.exports = {
 
                 if(pairData.status == -1) continue
 
+                if(_paperTrading && pairData.status > 0) {
+                    var orders = this.openOrders(pairData.name)
+                    var lastPrice = parseFloat(pairData.functions.lastPrice())
+                    for(var i = 0; i < orders.length; ++i) {
+                        var order = orders[i]
+                        var side = order.side
+                        var price = order.price
+
+                        if(side == "BUY") {
+                            if(lastPrice < price) {
+                                order.partFill = 1
+                                order.priceTraded = parseFloat(price)
+                                pairData.amountToSell += order.amount
+
+                                var quantity = order.amount
+                                var quantityFixed = quantity < 1 ? quantity : parseFloat(quantity).toFixed(2)
+                                chatBot.sendMessage(":high_brightness: [PT] Traded - " + pairData.chatName + " BUY " + quantityFixed + "@" + exchUtils.fixPrice(pairData.name, order.price) + " | 100.00%")
+                            }
+                        }
+                        else {
+                            if(lastPrice > price) {
+                                order.partFill = 1
+                                order.priceTraded = parseFloat(price)
+                                pairData.amountToSell -= order.amount
+
+                                var quantity = order.amount
+                                var quantityFixed = quantity < 1 ? quantity : parseFloat(quantity).toFixed(2)
+                                chatBot.sendMessage(":high_brightness: [PT] Traded - " + pairData.chatName + " SELL " + quantityFixed + "@" + exchUtils.fixPrice(pairData.name, order.price) + " | 100.00%")
+                            }
+                        }
+                    }
+                }
+
                 _source.process(this, pairData)
             }
         }
@@ -196,14 +235,20 @@ module.exports = {
 
             var finalProfit = (totalSold - totalBought) / totalBought * 100
             if(finalProfit <= 0) pairData.blackFlagTime = Date.now()
-            var fees = (totalSold + totalBought) * vars.tradingFees
-            var accountProfit = (totalSold - totalBought - fees) / vars.startBTCAmount * 100
             pairData.profit += finalProfit
-            pairData.accountProfit += accountProfit
             vars.pairs[pairData.name].addProfit(finalProfit)
-            vars.pairs[pairData.name].addAccountProfit(accountProfit)
             this.addProfit(finalProfit)
-            this.addAccountProfit(accountProfit)
+
+            var accountProfit = 0
+
+            if(!_paperTrading) {
+                var fees = (totalSold + totalBought) * vars.tradingFees
+                accountProfit = (totalSold - totalBought - fees) / vars.startBTCAmount * 100
+                pairData.accountProfit += accountProfit
+                vars.pairs[pairData.name].addAccountProfit(accountProfit)
+                this.addAccountProfit(accountProfit)
+            }
+
             var emojiCode = finalProfit > 0 ? "golf::tada" : "golf::cold_sweat"
 
             this.sendMessage(pairData, "trading #finished!\nProfit: " + finalProfit.toFixed(2) + "%\nAccount profit: " +
@@ -263,6 +308,133 @@ module.exports = {
 
             data.orders = []
             _source.resetPairCustomData(this, data)
+        }
+
+        this.buy = function(pair, price, amountMarket, next) {
+            if(_paperTrading) {
+                var quantity = parseFloat(exchUtils.normalizeAmount(pair.name, parseFloat(amountMarket / price), price))
+                var quantityFixed = quantity < 1 ? quantity : parseFloat(quantity).toFixed(2)
+                var order = this.createOrder(pair.name, shortid.generate(), "BUY", parseFloat(price), quantity)
+
+                setTimeout(function() {
+                    chatBot.sendMessage(":package: [PT] Created - " + pair.chatName + " BUY " + quantityFixed + "@" + exchUtils.fixPrice(pair.name, price))
+                }, 1000)
+
+                next(null, order)
+                return
+            }
+
+            pair.processing = true
+            exchUtils.balance(pair.market, function(error, balance) {
+                if(error) {
+                    pair.processing = false
+                    if(next) next("Error reading " + pair.market + " balance: " + error)
+                    return
+                }
+
+                if(balance.available > amountMarket) {
+                    exchUtils.createLimitOrder(pair.name, true, price, parseFloat(amountMarket / price), function(error, orderId, quantity, filled) {
+                        pair.processing = false
+
+                        var order = null
+                        if(!error) {
+                            order = this.createOrder(pair.name, orderId, "BUY", parseFloat(price), parseFloat(quantity))
+                            if(filled) {
+                                order.partFill = 1
+                                order.priceTraded = parseFloat(price)
+                                order.waiting = false
+                                pair.amountToSell += order.amount
+                            }
+                        }
+
+                        if(next) next(error, order)
+                    })
+                }
+                else {
+                    pair.processing = false
+                    if(next) next("Not enough " + pair.market + " available: " + balance.available)
+                }
+            })
+        }
+
+        this.sell = function(pair, price, quantity, next) {
+            if(_paperTrading) {
+                quantity = parseFloat(exchUtils.normalizeAmount(pair.name, quantity, price))
+                var quantityFixed = quantity < 1 ? quantity : parseFloat(quantity).toFixed(2)
+                var order = this.createOrder(pair.name, shortid.generate(), "SELL", parseFloat(price), parseFloat(quantity))
+
+                setTimeout(function() {
+                    chatBot.sendMessage(":package: [PT] Created - " + pair.chatName + " SELL " + quantityFixed + "@" + exchUtils.fixPrice(pair.name, price))
+                }, 1000)
+
+                next(null, order)
+                return
+            }
+
+            pair.processing = true
+            exchUtils.createLimitOrder(pair.name, false, price, quantity, function(error, orderId, quantity, filled) {
+                pair.processing = false
+                var order = null
+                if(!error) {
+                    order = this.createOrder(pair.name, orderId, "SELL", parseFloat(price), parseFloat(quantity))
+                    if(filled) {
+                        order.partFill = 1
+                        order.priceTraded = parseFloat(price)
+                        order.waiting = false
+                        pair.amountToSell -= order.amount
+                    }
+                }
+                if(next) next(error, order)
+            })
+        }
+
+        /*this.stopLoss = function(pair, price, stopPrice, quantity, next) {
+            //TODO paper trading
+            pair.processing = true
+            exchUtils.createStopLimitOrder(pair.name, false, price, stopPrice, quantity, function(error, orderId, quantity) {
+                pair.processing = false
+                if(next) next(error, orderId, quantity)
+            })
+        }*/
+
+        this.cancelOrder = function(pair, orderId, next) {
+            var targetOrder = this.orderById(pair.name, orderId)
+            if(!targetOrder) {
+                if(next) next("Error canceling order. Order with id " + orderId + " not found for " + pair.name)
+                return
+            }
+
+            if(targetOrder.canceled) {
+                if(next) next(null)
+                return
+            }
+
+            if(_paperTrading) {
+                targetOrder.canceled = true
+                targetOrder.waiting = false
+
+                var quantity = parseFloat(exchUtils.normalizeAmount(pair.name, targetOrder.amount, targetOrder.price))
+                var quantityFixed = quantity < 1 ? quantity : parseFloat(quantity).toFixed(2)
+
+                setTimeout(function() {
+                    chatBot.sendMessage(":wastebasket: [PT] Canceled - " + pair.chatName + " " + targetOrder.side + " " + quantityFixed + "@" + exchUtils.fixPrice(pair.name, targetOrder.price))
+                }, 1000)
+
+                next(null)
+                return
+            }
+
+            targetOrder.automatedCancel = true
+            pair.processing = true
+            exchUtils.cancelOrder(pair.name, orderId, function(error) {
+                pair.processing = false
+                if(error) targetOrder.automatedCancel = false
+                else {
+                    targetOrder.canceled = true
+                    targetOrder.waiting = false
+                }
+                next(error)
+            })
         }
 
         this.createOrder = function(pairName, orderId, side, price, amount, stopLoss = false) {
@@ -413,8 +585,9 @@ module.exports = {
         }
 
         this.sendMessage = function(pairData, message, emojiCode) {
+            var paperTradingStr = _paperTrading ? "[PT] " : ""
             var emojiString = emojiCode ? ":" + emojiCode + ": " : ""
-            chatBot.sendMessage(emojiString + _name + ": " + pairData.chatName + " " + message)
+            chatBot.sendMessage(emojiString + paperTradingStr + _name + ": " + pairData.chatName + " " + message)
         }
     }
 }

@@ -10,7 +10,8 @@ module.exports = {
         },
         buydip: {
             name: "Buy Dip",
-            buyAmountBTC: 0.018,
+            paperTrading: true,
+            buyAmountMarket: 0.018,
             profitTarget: 1.4,
             maxLoss: 0.8,
             maxTradingPairs: 5,

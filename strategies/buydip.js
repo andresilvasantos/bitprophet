@@ -1,7 +1,7 @@
 var bp = require('../bitprophet.js')
 
 var intervalsValidation = ["1h", "5m"]
-var intervalsWatch = ["1h", "15m", "5m"]
+var intervalsWatch = ["15m", "5m"]
 
 module.exports = {
     resetPairCustomData: function(pair) {
@@ -85,27 +85,18 @@ module.exports = {
             if(pair.tryBuyTimestamp && Date.now() - pair.tryBuyTimestamp < 10 * 1000) return
             pair.tryBuyTimestamp = Date.now()
 
-            pair.processing = true
-            bp.exchUtils.createBuyOrder(pair.name, parseFloat(price).toFixed(8), strategy.buyAmountBTC(), function(error, orderId, quantity, filled) {
-                pair.processing = false
-
+            strategy.buy(pair, parseFloat(price).toFixed(8), strategy.buyAmountMarket(), function(error, order) {
                 if(error) {
                     console.log("Error placing buy order", pair.name, error)
-                    pair.lastBase = null
                     return
                 }
 
                 strategy.sendMessage(pair, "trading started", "beginner")
 
-                pair.entryPrice = parseFloat(price)
+                pair.entryPrice = order.price
                 pair.sellTarget = pair.entryPrice * (1 + strategy.profitTarget())
 
-                var order = strategy.createOrder(pair.name, orderId, "BUY", parseFloat(price), parseFloat(quantity))
-
-                if(filled) {
-                    pair.amountToSell = order.amount
-                    order.partFill = 1
-                    order.waiting = false
+                if(order.partFill >= 1) {
                     pair.status = 2
                 }
                 else {
@@ -115,23 +106,21 @@ module.exports = {
             })
         }
 
-        var chart1h = pair.functions.chart(intervalsWatch[0]).ticks
-        var chart15m = pair.functions.chart(intervalsWatch[1]).ticks
-        var chart5m = pair.functions.chart(intervalsWatch[2]).ticks
+        var chart15m = pair.functions.chart(intervalsWatch[0]).ticks
+        var chart5m = pair.functions.chart(intervalsWatch[1]).ticks
 
-        if(chart1h.length < 500 || chart15m.length < 500 || chart5m.length < 500) return
+        if(chart15m.length < 500 || chart5m.length < 500) return
 
         var lastClose = parseFloat(chart5m[chart5m.length - 1].close)
         var rsi5m = bp.indicators.rsi(chart5m, 14, 100, 1)
-        var stoch1h = bp.indicators.stochastic(chart1h, 14, 3)
+
         var stoch15m = bp.indicators.stochastic(chart15m, 14, 3)
         var stoch5m = bp.indicators.stochastic(chart5m, 14, 3)
         rsi5m = rsi5m[0]
-        stoch1h = bp.indicators.average(stoch1h)
         stoch15m = bp.indicators.average(stoch15m)
         stoch5m = bp.indicators.average(stoch5m)
 
-        if(stoch1h < 45 && stoch5m < 20 && ((rsi5m < 26 && stoch15m < 15) || (rsi5m < 21 && stoch15m < 30))) {
+        if(stoch5m < 20 && ((rsi5m < 26 && stoch15m < 15) || (rsi5m < 21 && stoch15m < 30))) {
             placeOrder(lastClose)
         }
     },
@@ -148,7 +137,7 @@ module.exports = {
         if(diffTime > 3 * 60 * 1000 || bp.vars.btcAnalysis.dangerZone) {
             var filledAmount = order.amount * pair.partFill
             var boughtPart = order.partFill > 0
-            var enoughForNewOrder = order.partFill * strategy.buyAmountBTC() >= bp.vars.minTradeAmount
+            var enoughForNewOrder = order.partFill * strategy.buyAmountMarket() >= bp.vars.minTradeAmount
 
             if(boughtPart && !enoughForNewOrder) {
                 if(!pair.warningSilent) {
@@ -158,16 +147,11 @@ module.exports = {
                 return
             }
 
-            pair.processing = true
-            bp.exchUtils.cancelOrder(pair.name, order.id, function(error) {
-                pair.processing = false
+            strategy.cancelOrder(pair, order.id, function(error) {
                 if(error) {
                     console.log("Error canceling buy order", error)
                     return
                 }
-
-                order.canceled = true
-                order.waiting = false
 
                 if(boughtPart) {
                     pair.status++
@@ -180,20 +164,13 @@ module.exports = {
         }
     },
     setupSellOrder: function(strategy, pair) {
-        pair.processing = true
-        bp.exchUtils.createSellOrder(pair.name, parseFloat(pair.sellTarget).toFixed(8), pair.amountToSell, function(error, orderId, filled) {
-            pair.processing = false
-
+        strategy.sell(pair, pair.sellTarget, pair.amountToSell, function(error, order) {
             if(error) {
                 console.log("Error placing sell order", pair.name, error)
                 return
             }
 
-            var order = strategy.createOrder(pair.name, orderId, "SELL", parseFloat(pair.sellTarget), pair.amountToSell)
-
-            if(filled) {
-                pair.amountToSell -= order.amount
-                order.partFill = 1
+            if(order.partFill >= 1) {
                 pair.status = 4
             }
             else {
@@ -212,30 +189,18 @@ module.exports = {
         }
 
         function recreateSellOrder() {
-            pair.processing = true
-            bp.exchUtils.cancelOrder(pair.name, order ? order.id : null, function(error) {
+            strategy.cancelOrder(pair, order ? order.id : null, function(error) {
                 if(error) {
                     console.log("Error canceling sell order", pair.name, error)
                 }
 
-                if(order) {
-                    order.canceled = true
-                    order.waiting = false
-                }
-
-                bp.exchUtils.createSellOrder(pair.name, pair.sellTarget, pair.amountToSell, function(error, orderId, filled) {
-                    pair.processing = false
+                strategy.sell(pair, pair.sellTarget, pair.amountToSell, function(error, order) {
                     if(error) {
                         console.log("Error creating sell order", pair.name, error)
                         return
                     }
 
-                    var order = strategy.createOrder(pair.name, orderId, "SELL", parseFloat(pair.sellTarget).toFixed(8), pair.amountToSell)
-
-                    if(filled) {
-                        pair.amountToSell -= order.amount
-                        order.partFill = 1
-                        order.waiting = false
+                    if(order.partFill >= 1) {
                         pair.status = 4
                     }
                 })
@@ -256,7 +221,7 @@ module.exports = {
             recreateSellOrder()
         }
         else {
-            var chart5m = pair.functions.chart(intervalsWatch[2]).ticks
+            var chart5m = pair.functions.chart(intervalsWatch[1]).ticks
             var lastClose = parseFloat(chart5m[chart5m.length - 1].close)
 
             var activateStopLoss = strategy.manageStopLoss(pair, lastClose)

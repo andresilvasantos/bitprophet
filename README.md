@@ -1,13 +1,14 @@
 [![NPM](https://nodei.co/npm/bitprophet.png?compact=true)](https://npmjs.org/package/bitprophet)
 
 # BitProphet
-BitProphet is a node crypto trading platform for Binance exchange that uses Telegram as the interface. Its main purpose is the automation of trading techniques, but it can also be used as a simple order notification tracker or as an alert system for the most used technical indicators.
+BitProphet is a node crypto trading platform for Binance exchange that uses Telegram as its interface. Its main purpose is the automation of trading techniques, but it can also be used as a simple order notification tracker or as an alert system for the most used technical indicators.
 Suggestions and pull requests are very welcome!
 
 #### Features
 * Analyse hundreds of tokens in multiple intervals EVERY second
 * Technical Indicators (SMA, EMA, RSI, Stochastics, Bollinger Bands, Ichimoku and more)
 * Stop loss and trailing profits
+* Paper trading
 * Create your own strategies
 * Be notified anywhere
 
@@ -56,6 +57,14 @@ bitprophet.options({
 bitprophet.start()
 ```
 
+You should now see a message in Telegram telling you BitProphet has started.
+
+In Telegram type __list__ and you'll see all the available strategies listed with the respective ids.
+If a strategy listed has the [PT] prefix, it means it has Paper Trading active.
+To start a strategy, just type __start strategy_id__. For example, __start buydip__.
+
+![Getting Started](https://github.com/andresilvasantos/bitprophet/raw/master/pres/getting_started.png)
+
 #### Adding Strategies
 Add the following option naming a new directory for your strategies.
 
@@ -75,11 +84,19 @@ module.exports = {
         },
         quickdip: {
             name: "Quick Dip",
-            //buyAmountBTC: 0.012,
+            //buyAmountMarket: 0.012,
             buyPercentageAccount: 0.01,
             profitTarget: 1.4,
             maxLoss: 0.8,
             maxTradingPairs: 4,
+            targetMarket: "BTC"
+        },
+        ichitest: {
+            name: "Ichimoku Test",
+            paperTrading: true,
+            buyAmountMarket: 0.012,
+            profitTarget: 1.4,
+            maxTradingPairs: 8,
             targetMarket: "BTC"
         },
         //...

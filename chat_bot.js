@@ -87,11 +87,11 @@ module.exports = {
                 this.sendMessage(profitString);
             }
             else if(message == "left" || message == "l") {
-                this.sendMessage(":speech_balloon:");
+                //this.sendMessage(":speech_balloon:");
 
                 var leftPairsStr = ""
 
-                var tokens = {}
+                /*var tokens = {}
                 binance.prices((error, ticker) => {
                     if(error) {
                         this.sendMessage('Error reading prices.');
@@ -100,7 +100,7 @@ module.exports = {
                     }
                 	for ( var symbol in ticker ) {
                 		tokens[symbol] = parseFloat(ticker[symbol]);
-                	}
+                	}*/
 
                     for(var i = 0; i < vars.strategies.length; ++i) {
                         var strategy = vars.strategies[i]
@@ -115,30 +115,35 @@ module.exports = {
 
                             var totalBought = strategy.buyTradedInfo(pair).amountMarketPrice
                             var totalSold = strategy.sellTradedInfo(pair).amountMarketPrice
-                            var sellCurrentPrice = totalSold + (tokens[pair.name] * pair.amountToSell)
+                            var sellCurrentPrice = totalSold + (pair.functions.lastPrice() * pair.amountToSell)
                             var currentProfit = (sellCurrentPrice - totalBought) / totalBought * 100
-                            var fees = (sellCurrentPrice + totalBought) * vars.tradingFees
-                            var currentAccountProfit = (sellCurrentPrice - totalBought - fees) / vars.startBTCAmount * 100
+
+                            var currentAccountProfit = 0
+                            if(!strategy.paperTrading()) {
+                                var fees = (sellCurrentPrice + totalBought) * vars.tradingFees
+                                currentAccountProfit = (sellCurrentPrice - totalBought - fees) / vars.startBTCAmount * 100
+                            }
 
                             var sellTarget = ""
                             if(pair.sellTarget > 0) {
-                                var sellTargetPercentage = (tokens[pair.name] - pair.sellTarget) / pair.sellTarget * 100
+                                var sellTargetPercentage = (pair.functions.lastPrice() - pair.sellTarget) / pair.sellTarget * 100
                                 sellTarget = " -> " + exchUtils.fixPrice(pair.name, parseFloat(pair.sellTarget).toFixed(8)) + "[" + sellTargetPercentage.toFixed(2) + "%]"
                             }
 
                             var spacer = strategyStr.length ? "\n" : ""
-                            strategyStr += spacer + pair.chatName + " " + tokens[pair.name] + "[" + currentProfit.toFixed(2) + "% | " +
+                            strategyStr += spacer + pair.chatName + " " + pair.functions.lastPrice() + "[" + currentProfit.toFixed(2) + "% | " +
                                 currentAccountProfit.toFixed(2) + "%]" + sellTarget
                         }
 
                         if(strategyStr.length) {
-                            strategyStr = ":barber: " + strategy.name() + ":\n" + strategyStr
+                            var paperTradingStr = strategy.paperTrading() ? "[PT] " : ""
+                            strategyStr = ":barber: " + paperTradingStr + strategy.name() + ":\n" + strategyStr
                             leftPairsStr += strategyStr + "\n"
                         }
                     }
                     if(!leftPairsStr.length) leftPairsStr = ":ok_hand: Nothing left to sell."
                     this.sendMessage(leftPairsStr);
-                })
+                //})
             }
             else if(message == "pause") {
                 vars.paused = !vars.paused
@@ -214,7 +219,7 @@ module.exports = {
 
                 this.sendMessage(":grey_question: " + pairName + " - no trading pair found");
             }
-            else if(message.startsWith("start ") || message.startsWith("stop ") || message.startsWith("reload ")) {
+            else if(message.startsWith("start ") || message.startsWith("stop ")) {
                 var split = message.split(" ")
                 if(split.length < 2) {
                     this.sendMessage("Name a strategy");
@@ -237,29 +242,23 @@ module.exports = {
                     return
                 }
 
+                var paperTradingStr = strategy.paperTrading() ? "[PT] " : ""
+
                 if(action == "start") {
                     if(strategy.active()) {
-                        this.sendMessage(strategy.name() + ' already started');
+                        this.sendMessage(paperTradingStr + strategy.name() + ' already started');
                         return
                     }
                     strategy.setActive(true)
-                    this.sendMessage(":large_orange_diamond: " + strategy.name() + ' started');
+                    this.sendMessage(":large_orange_diamond: " + paperTradingStr + strategy.name() + ' started');
                 }
                 else if(action == "stop") {
                     if(!strategy.active()) {
-                        this.sendMessage(strategy.name() + ' already stopped');
+                        this.sendMessage(paperTradingStr + strategy.name() + ' already stopped');
                         return
                     }
                     strategy.setActive(false)
-                    this.sendMessage(":ghost: " + strategy.name() + ' stopped');
-                }
-                else if(action == "reload") {
-                    if(strategy.active()) {
-                        this.sendMessage('You need to stop the strategy first');
-                        return
-                    }
-                    strategy.reloadSource()
-                    this.sendMessage(strategy.name() + ' reloaded');
+                    this.sendMessage(":ghost: " + paperTradingStr + strategy.name() + ' stopped');
                 }
             }
             else if(message.startsWith("list")) {
@@ -319,7 +318,8 @@ module.exports = {
 
                     for(var i = 0; i < vars.strategies.length; ++i) {
                         var strategy = vars.strategies[i]
-                        var strategyMsg = "." + strategy.name() + " (" + strategy.id() + ")" + " " + strategy.validPairs().length + ", " + strategy.tradingPairs().length
+                        var paperTradingStr = strategy.paperTrading() ? "[PT] " : ""
+                        var strategyMsg = "." + paperTradingStr + strategy.name() + " (" + strategy.id() + ")" + " " + strategy.validPairs().length + ", " + strategy.tradingPairs().length
                         if(strategy.active()) {
                             if(messageStarted.length) messageStarted += "\n"
                             messageStarted += strategyMsg
