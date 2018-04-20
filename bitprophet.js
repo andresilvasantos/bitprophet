@@ -177,7 +177,8 @@ module.exports = function() {
             else {
                 for(var i = 0; i < activeStrategies.length; ++i) {
                     var strategy = activeStrategies[i]
-                    consoleMsg += " | " + strategy.name() + " - " + strategy.validPairs().length + " " + strategy.tradingPairs().length + " " + strategy.profit().toFixed(2) + "%"
+                    var paperTradingStr = strategy.paperTrading() ? "[PT] " : ""
+                    consoleMsg += " | " + paperTradingStr + strategy.name() + " - " + strategy.validPairs().length + " " + strategy.tradingPairs().length + " " + strategy.profit().toFixed(2) + "%"
                 }
             }
 

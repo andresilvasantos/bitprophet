@@ -307,7 +307,7 @@ module.exports = {
             }
 
             data.orders = []
-            _source.resetPairCustomData(this, data)
+            _source.resetPairCustomData(data)
         }
 
         this.buy = function(pair, price, amountMarket, next) {
