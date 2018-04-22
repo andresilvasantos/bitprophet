@@ -9,6 +9,7 @@ module.exports = {
         var _id = strategyId
         var _name = strategyName
         var _active = false
+        var _warningSilent = false
         var _targetMarket = ""
         var _targetTokens = []
         var _paperTrading = false
@@ -140,12 +141,35 @@ module.exports = {
                     this.tradingPairs().length >= _maxTradingPairs || blackFlagTime < 15 * 60 * 1000))) continue
 
                 if(pairData.status <= 0) {
-                    if(pairData.status == -1) _source.resetPairCustomData(pairData)
+                    if(pairData.status == -1) {
+                        try {
+                            _source.resetPairCustomData(pairData)
+                        }
+                        catch(error) {
+                            if(!_warningSilent) {
+                                chatBot.sendMessage(":warning: " + _name + " is crashing. Check the console logs for more info.")
+                                _warningSilent = true
+                            }
+                            console.log(error)
+                            continue
+                        }
+                    }
 
                     var needsCheck = currentTime - pairData.lastValidCheck >= 10 * 60 * 1000
                     if(needsCheck) {
-                        _source.checkValidWorkingPair(this, pairData)
-                        continue
+                        try {
+                            _source.checkValidWorkingPair(this, pairData)
+                        }
+                        catch(error) {
+                            if(!_warningSilent) {
+                                chatBot.sendMessage(":warning: " + _name + " is crashing. Check the console logs for more info.")
+                                _warningSilent = true
+                            }
+                            console.log(error)
+                        }
+                        finally {
+                            continue
+                        }
                     }
                 }
 
@@ -184,7 +208,16 @@ module.exports = {
                     }
                 }
 
-                _source.process(this, pairData)
+                try {
+                    _source.process(this, pairData)
+                }
+                catch(error) {
+                    if(!_warningSilent) {
+                        chatBot.sendMessage(":warning: " + _name + " is crashing. Check the console logs for more info.")
+                        _warningSilent = true
+                    }
+                    console.log(error)
+                }
             }
         }
 
@@ -198,8 +231,8 @@ module.exports = {
                 }
             }
 
-            if(lastClose <= pairData.stopLoss.stopPrice && pairData.sellTarget != parseFloat(pairData.stopLoss.sellPrice).toFixed(8)) {
-                pairData.sellTarget = parseFloat(pairData.stopLoss.sellPrice).toFixed(8)
+            if(lastClose <= pairData.stopLoss.stopPrice && pairData.sellTarget > pairData.stopLoss.sellPrice) {
+                pairData.sellTarget = pairData.stopLoss.sellPrice
                 return true
             }
 
@@ -307,7 +340,17 @@ module.exports = {
             }
 
             data.orders = []
-            _source.resetPairCustomData(data)
+
+            try {
+                _source.resetPairCustomData(data)
+            }
+            catch(error) {
+                if(!_warningSilent) {
+                    chatBot.sendMessage(":warning: " + _name + " is crashing. Check the console logs for more info.")
+                    _warningSilent = true
+                }
+                console.log(error)
+            }
         }
 
         this.buy = function(pair, price, amountMarket, next) {
