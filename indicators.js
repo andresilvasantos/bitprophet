@@ -383,5 +383,38 @@ module.exports = {
             volume24h += parseFloat(ticks[i].volume) * avgPrice
         }
         return volume24h
+    },
+    heikinAshi: function(ticks) {
+        //Heikin Ashi candlesticks are best for swing trading (not daytrading) and are used to identify market trends
+        //Read more here: https://www.investopedia.com/articles/technical/04/092204.asp
+        //I think they are best used in 6h, 12h and 1d charts for crypto
+    
+        var ha = [];
+        //first HA candle must be calculated:
+        if(ticks.length > 1) {
+          var o = parseFloat(ticks[0].open);
+          var h = parseFloat(ticks[0].high);
+          var l = parseFloat(ticks[0].low);
+          var c = parseFloat(ticks[0].close);
+          
+          var hac = (o + h + l + c) / 4;
+          var hao = ((o + c)/2);
+          var hah = h;
+          var hal = l;
+          ha.push({open: hao, high: hah, low: hal, close: hac});
+          for(var i=1; i<ticks.length; i++) {
+            o = parseFloat(ticks[i].open);
+            h = parseFloat(ticks[i].high);
+            l = parseFloat(ticks[i].low);
+            c = parseFloat(ticks[i].close);
+            
+            hac = (o + h + l + c) / 4;
+            hao = (o + c) / 2;
+            hah = Math.max(h, hao, hac);
+            hal = Math.min(l, hao, hac);
+            ha.push({open: hao, high: hah, low: hal, close: hac});
+          }
+        }       
+        return ha;
     }
 }
