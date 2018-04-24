@@ -397,25 +397,24 @@ module.exports = {
           var l = parseFloat(ticks[0].low);
           var c = parseFloat(ticks[0].close);
           
-          var HAC = (o + h + l + c) / 4;
-          var HAO = ((o + c)/2);
-          var HAH = h;
-          var HAL = l;
-          ha.push({open: HAO, high: HAH, low: HAL, close: HAC});
+          var hac = (o + h + l + c) / 4;
+          var hao = ((o + c)/2);
+          var hah = h;
+          var hal = l;
+          ha.push({open: hao, high: hah, low: hal, close: hac});
           for(var i=1; i<ticks.length; i++) {
             o = parseFloat(ticks[i].open);
             h = parseFloat(ticks[i].high);
             l = parseFloat(ticks[i].low);
             c = parseFloat(ticks[i].close);
             
-            HAC = (o + h + l + c) / 4;
-            HAO = (o + c) / 2;
-            HAH = Math.max(h, HAO, HAC);
-            HAL = Math.min(l, HAO, HAC);
-            ha.push({open: HAO, high: HAH, low: HAL, close: HAC});
+            hac = (o + h + l + c) / 4;
+            hao = (o + c) / 2;
+            hah = Math.max(h, hao, hac);
+            hal = Math.min(l, hao, hac);
+            ha.push({open: hao, high: hah, low: hal, close: hac});
           }
-        }
-        
+        }       
         return ha;
     }
 }
