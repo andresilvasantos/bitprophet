@@ -90,6 +90,31 @@ module.exports = {
             });
         });
     },
+    accountOpenOrders: function(pairName, next) {
+	    var pair  = pairName? pairName : false
+
+	    binance.openOrders(pair, (error, response) => {
+		if (error) {
+		    console.log(error)
+		    next(":exclamation: " + pair + " - Pair is not valid (e.g. ETHBTC)")
+		    return
+		}
+	       
+		if (response.length < 1) {
+		    next(':information_source: No open orders')
+		    return
+		}
+
+		var orders = ":book: Orders"
+
+		for (var i=0; i < response.length; i++) {
+		    orders+= "\n" + vars.pairs[response[i]['symbol']].chatName() + " " + response[i]['origQty'] + "@" + response[i]['price'] + "\n"
+		}
+
+		next(null, orders)
+		return
+	    })
+    },
     normalizeAmount: function(pair, amount, price) {
         // Set minimum order amount with minQty
         if ( amount < vars.pairsInfo[pair].filters.minQty ) amount = vars.pairsInfo[pair].filters.minQty;
