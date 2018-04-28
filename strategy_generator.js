@@ -369,7 +369,7 @@ module.exports = {
 
             var that = this
             pair.processing = true
-            exchUtils.balance(pair.market, function(error, balance) {
+            exchUtils.accountBalance(pair.market, function(error, balance) {
                 if(error) {
                     pair.processing = false
                     if(next) next("Error reading " + pair.market + " balance: " + error)
