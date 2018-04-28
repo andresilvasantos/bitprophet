@@ -126,4 +126,4 @@ Create your strategies based on the examples.
 * __restart__ - Kills the platform. Useful when using a keep alive process manager like [pm2](https://github.com/Unitech/pm2).
 
 
-Contributors: [https://github.com/supershwa](supershwa), [https://github.com/ionutgalita](ionutgalita)
+Contributors: [supershwa](https://github.com/supershwa), [ionutgalita](https://github.com/ionutgalita)
