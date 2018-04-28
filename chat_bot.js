@@ -112,7 +112,7 @@ module.exports = {
                         for(var j = 0; j < pairs.length; ++j) {
                             var pair = pairs[j]
                             if(!pair.amountToSell) continue
-
+ 
                             var totalBought = strategy.buyTradedInfo(pair).amountMarketPrice
                             var totalSold = strategy.sellTradedInfo(pair).amountMarketPrice
                             var sellCurrentPrice = totalSold + (pair.functions.lastPrice() * pair.amountToSell)
@@ -219,7 +219,27 @@ module.exports = {
 
                 this.sendMessage(":grey_question: " + pairName + " - no trading pair found");
             }
-            else if(message.startsWith("start ") || message.startsWith("stop ")) {
+            else if ((message.startsWith("orders")) || (message.startsWith("o"))) {
+                this.sendMessage(":speech_balloon:")
+                var pairName = false
+                
+                if (message.indexOf(' ') > 0) {
+                    message = message.split(' ')
+                    pairName = message[1].toUpperCase()
+                }
+
+                exchUtils.accountOpenOrders(pairName, (error, response) => {
+                        if(error) {
+                            this.sendMessage(error)
+                            return
+                        }
+
+                        this.sendMessage(response)
+                        return
+                })
+
+	        }
+	        else if(message.startsWith("start ") || message.startsWith("stop ")) {
                 var split = message.split(" ")
                 if(split.length < 2) {
                     this.sendMessage("Name a strategy");
