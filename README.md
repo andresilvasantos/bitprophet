@@ -117,10 +117,13 @@ Create your strategies based on the examples.
 * __pause__ - Pause system (ongoing trades won't be paused)
 * __exit token__ / __sell token__ - Sells token, if it's currently trading
 * __exit token price__ / __sell token price__ - Sells token@price, if it's currently trading
-* __cancel token__ / __ignore token__ - Cancel currently trading token
+* __cancel token__ - Cancel currently trading token
 * __orders token__ - Show account open orders. If token is provided, only open orders for that pair will be returned
 * __start strategyId__ - Starts strategy
 * __stop strategyId__ - Stops strategy
 * __list__ - Lists all strategies
 * __list strategyId__ - Lists all valid / trading pairs for the given strategy
 * __restart__ - Kills the platform. Useful when using a keep alive process manager like [pm2](https://github.com/Unitech/pm2).
+
+
+Contributors: [https://github.com/supershwa](supershwa), [https://github.com/ionutgalita](ionutgalita)

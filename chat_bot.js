@@ -87,63 +87,50 @@ module.exports = {
                 this.sendMessage(profitString);
             }
             else if(message == "left" || message == "l") {
-                //this.sendMessage(":speech_balloon:");
 
                 var leftPairsStr = ""
 
-                /*var tokens = {}
-                binance.prices((error, ticker) => {
-                    if(error) {
-                        this.sendMessage('Error reading prices.');
-                        console.log("Error reading prices: " + error)
-                        return
-                    }
-                	for ( var symbol in ticker ) {
-                		tokens[symbol] = parseFloat(ticker[symbol]);
-                	}*/
+                for(var i = 0; i < vars.strategies.length; ++i) {
+                    var strategy = vars.strategies[i]
+                    var pairs = strategy.tradingPairs()
 
-                    for(var i = 0; i < vars.strategies.length; ++i) {
-                        var strategy = vars.strategies[i]
-                        var pairs = strategy.tradingPairs()
+                    var strategyStr = ""
+                    var pairsStr = ""
 
-                        var strategyStr = ""
-                        var pairsStr = ""
+                    for(var j = 0; j < pairs.length; ++j) {
+                        var pair = pairs[j]
+                        if(!pair.amountToSell) continue
 
-                        for(var j = 0; j < pairs.length; ++j) {
-                            var pair = pairs[j]
-                            if(!pair.amountToSell) continue
- 
-                            var totalBought = strategy.buyTradedInfo(pair).amountMarketPrice
-                            var totalSold = strategy.sellTradedInfo(pair).amountMarketPrice
-                            var sellCurrentPrice = totalSold + (pair.functions.lastPrice() * pair.amountToSell)
-                            var currentProfit = (sellCurrentPrice - totalBought) / totalBought * 100
+                        var totalBought = strategy.buyTradedInfo(pair).amountMarketPrice
+                        var totalSold = strategy.sellTradedInfo(pair).amountMarketPrice
+                        var sellCurrentPrice = totalSold + (pair.functions.lastPrice() * pair.amountToSell)
+                        var currentProfit = (sellCurrentPrice - totalBought) / totalBought * 100
 
-                            var currentAccountProfit = 0
-                            if(!strategy.paperTrading()) {
-                                var fees = (sellCurrentPrice + totalBought) * vars.tradingFees
-                                currentAccountProfit = (sellCurrentPrice - totalBought - fees) / vars.startBTCAmount * 100
-                            }
-
-                            var sellTarget = ""
-                            if(pair.sellTarget > 0) {
-                                var sellTargetPercentage = (pair.functions.lastPrice() - pair.sellTarget) / pair.sellTarget * 100
-                                sellTarget = " -> " + exchUtils.fixPrice(pair.name, parseFloat(pair.sellTarget).toFixed(8)) + "[" + sellTargetPercentage.toFixed(2) + "%]"
-                            }
-
-                            var spacer = strategyStr.length ? "\n" : ""
-                            strategyStr += spacer + pair.chatName + " " + pair.functions.lastPrice() + "[" + currentProfit.toFixed(2) + "% | " +
-                                currentAccountProfit.toFixed(2) + "%]" + sellTarget
+                        var currentAccountProfit = 0
+                        if(!strategy.paperTrading()) {
+                            var fees = (sellCurrentPrice + totalBought) * vars.tradingFees
+                            currentAccountProfit = (sellCurrentPrice - totalBought - fees) / vars.startBTCAmount * 100
                         }
 
-                        if(strategyStr.length) {
-                            var paperTradingStr = strategy.paperTrading() ? "[PT] " : ""
-                            strategyStr = ":barber: " + paperTradingStr + strategy.name() + ":\n" + strategyStr
-                            leftPairsStr += strategyStr + "\n"
+                        var sellTarget = ""
+                        if(pair.sellTarget > 0) {
+                            var sellTargetPercentage = (pair.functions.lastPrice() - pair.sellTarget) / pair.sellTarget * 100
+                            sellTarget = " -> " + exchUtils.fixPrice(pair.name, parseFloat(pair.sellTarget).toFixed(8)) + "[" + sellTargetPercentage.toFixed(2) + "%]"
                         }
+
+                        var spacer = strategyStr.length ? "\n" : ""
+                        strategyStr += spacer + pair.chatName + " " + pair.functions.lastPrice() + "[" + currentProfit.toFixed(2) + "% | " +
+                            currentAccountProfit.toFixed(2) + "%]" + sellTarget
                     }
-                    if(!leftPairsStr.length) leftPairsStr = ":ok_hand: Nothing left to sell."
-                    this.sendMessage(leftPairsStr);
-                //})
+
+                    if(strategyStr.length) {
+                        var paperTradingStr = strategy.paperTrading() ? "[PT] " : ""
+                        strategyStr = ":barber: " + paperTradingStr + strategy.name() + ":\n" + strategyStr
+                        leftPairsStr += strategyStr + "\n"
+                    }
+                }
+                if(!leftPairsStr.length) leftPairsStr = ":ok_hand: Nothing left to sell."
+                this.sendMessage(leftPairsStr);
             }
             else if(message == "pause") {
                 vars.paused = !vars.paused
@@ -195,7 +182,7 @@ module.exports = {
 
                 this.sendMessage(":grey_question: " + pairName + " - no trading pair found");
             }
-            else if(message.startsWith("cancel ") || message.startsWith("ignore ")) {
+            else if(message.startsWith("cancel ")) {
                 var split = message.split(" ")
                 if(split.length < 2) {
                     this.sendMessage("Name a token");
@@ -221,23 +208,36 @@ module.exports = {
             }
             else if ((message.startsWith("orders")) || (message.startsWith("o"))) {
                 this.sendMessage(":speech_balloon:")
-                var pairName = false
-                
-                if (message.indexOf(' ') > 0) {
-                    message = message.split(' ')
-                    pairName = message[1].toUpperCase()
+                var pairName = null
+
+                if(message.indexOf(" ") > 0) {
+                    var split = message.split(" ")
+                    if(split.length == 2) pairName = split[1].toUpperCase()
                 }
 
-                exchUtils.accountOpenOrders(pairName, (error, response) => {
-                        if(error) {
-                            this.sendMessage(error)
-                            return
-                        }
-
-                        this.sendMessage(response)
+                exchUtils.accountOpenOrders(false, (error, orders) => {
+                    if(error) {
+                        this.sendMessage('Error reading open orders');
                         return
-                })
+                    }
 
+                    var ordersStr = ""
+                    for(var i = 0; i < orders.length; ++i) {
+                        var order = orders[i]
+                        var quantityFixed = order.amount < 1 ? order.amount : parseFloat(order.amount).toFixed(2)
+                        var pair = vars.pairs[order.pairName]
+                        if(pairName && pair.tokenName() != pairName && pair.name() != pairName) continue
+                        ordersStr += "[" + order.id + "] " + pair.chatName() + " " + order.side + " " + quantityFixed + "@" + order.price + "\n"
+                    }
+
+                    if(!ordersStr.length) {
+                        this.sendMessage(':information_source: No open orders')
+                    }
+                    else {
+                        ordersStr = ":book: Orders\n" + ordersStr
+                        this.sendMessage(ordersStr)
+                    }
+                })
 	        }
 	        else if(message.startsWith("start ") || message.startsWith("stop ")) {
                 var split = message.split(" ")

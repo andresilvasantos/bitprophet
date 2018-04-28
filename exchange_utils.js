@@ -36,7 +36,22 @@ module.exports = {
             next(error)
         });
     },
-    balance: function(token, next) {
+    normalizeAmount: function(pair, amount, price) {
+        // Set minimum order amount with minQty
+        if ( amount < vars.pairsInfo[pair].filters.minQty ) amount = vars.pairsInfo[pair].filters.minQty;
+        // Set minimum order amount with minNotional
+        if (price && price * amount < vars.pairsInfo[pair].filters.minNotional ) {
+            amount = vars.pairsInfo[pair].filters.minNotional / price;
+        }
+        // Round to stepSize
+        return binance.roundStep(amount, vars.pairsInfo[pair].filters.stepSize);
+    },
+    fixPrice: function(pair, price) {
+        var index = String(vars.pairsInfo[pair].filters.tickSize).indexOf("1")
+        var count = index - 1
+        return parseFloat(price).toFixed(count)
+    },
+    accountBalance: function(token, next) {
         binance.balance((error, balances) => {
             next(error, balances[token])
         })
@@ -91,44 +106,20 @@ module.exports = {
         });
     },
     accountOpenOrders: function(pairName, next) {
-	    var pair  = pairName? pairName : false
+	    binance.openOrders(pairName ? pairName : false, (error, response) => {
+    		if (error) {
+                next("Error reading open orders: " + error)
+    		    return
+    		}
 
-	    binance.openOrders(pair, (error, response) => {
-		if (error) {
-		    console.log(error)
-		    next(":exclamation: " + pair + " - Pair is not valid (e.g. ETHBTC)")
-		    return
-		}
-	       
-		if (response.length < 1) {
-		    next(':information_source: No open orders')
-		    return
-		}
+            var orders = []
+    		for (var i = 0; i < response.length; ++i) {
+                var order = response[i]
+    		    orders.push({id: order['orderId'], pairName: order['symbol'], side: order['side'], amount: order['origQty'], price: order['price']})
+    		}
 
-		var orders = ":book: Orders"
-
-		for (var i=0; i < response.length; i++) {
-		    orders+= "\n" + vars.pairs[response[i]['symbol']].chatName() + " " + response[i]['origQty'] + "@" + response[i]['price'] + "\n"
-		}
-
-		next(null, orders)
-		return
+    		next(null, orders)
 	    })
-    },
-    normalizeAmount: function(pair, amount, price) {
-        // Set minimum order amount with minQty
-        if ( amount < vars.pairsInfo[pair].filters.minQty ) amount = vars.pairsInfo[pair].filters.minQty;
-        // Set minimum order amount with minNotional
-        if (price && price * amount < vars.pairsInfo[pair].filters.minNotional ) {
-            amount = vars.pairsInfo[pair].filters.minNotional / price;
-        }
-        // Round to stepSize
-        return binance.roundStep(amount, vars.pairsInfo[pair].filters.stepSize);
-    },
-    fixPrice: function(pair, price) {
-        var index = String(vars.pairsInfo[pair].filters.tickSize).indexOf("1")
-        var count = index - 1
-        return parseFloat(price).toFixed(count)
     },
     createLimitOrder: function(pairName, sideBuy, price, quantity, next) {
         quantity = this.normalizeAmount(pairName, quantity, price)
