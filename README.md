@@ -1,7 +1,7 @@
 [![NPM](https://nodei.co/npm/bitprophet.png?compact=true)](https://npmjs.org/package/bitprophet)
 
 # BitProphet
-BitProphet is a node crypto trading platform for Binance exchange that uses Telegram as its interface. Its main purpose is the automation of trading techniques, but it can also be used as a simple order notification tracker or as an alert system for the most used technical indicators.
+BitProphet is a node crypto trading platform for Binance exchange that uses chat bots as its interface. Its main purpose is the automation of trading techniques, but it can also be used as a simple order notification tracker or as an alert system for the most used technical indicators.
 Suggestions and pull requests are very welcome!
 
 #### Features
@@ -10,7 +10,7 @@ Suggestions and pull requests are very welcome!
 * Stop loss and trailing profits
 * Paper trading
 * Create your own strategies
-* Be notified anywhere
+* Be notified anywhere with Telegram or Discord
 
 ![Telegram Interface](https://github.com/andresilvasantos/bitprophet/raw/master/pres/chat_example.png)
 
@@ -19,18 +19,24 @@ Suggestions and pull requests are very welcome!
 npm install bitprophet --save
 ```
 
-#### Setting Up Telegram
+#### Setting Up Telegram Bot
 First, you'll need to create a bot for Telegram. Just talk to [BotFather](https://telegram.me/botfather) and follow simple steps until it gives you a token for it.
 You'll also need to create a Telegram group, the place where you and BitProphet will communicate. After creating it, add the bot as administrator (make sure to uncheck "All Members Are Admins").
 
-#### Retrieving Telegram's Group ID
-In order to find out the group id you've just created, run node with the following code and then just say something in the group. The bot will reply with the chat id.
+#### Setting Up Discord Bot (optional)
+Create a server and follow [these simple steps](https://github.com/reactiflux/discord-irc/wiki/Creating-a-discord-bot-&-getting-a-token) until you have a token and added the bot to the server you've just created.
+
+#### Retrieving Chat IDs
+In order to find out the chat id where your bot was added to, run node with the following code and then just say something in the group/server. The bot will reply with the chat id.
 
 ```javascript
 const bitprophet = require('bitprophet')
 bitprophet.options({
     telegram: {
         token: "YOUR_TELEGRAM_BOT_TOKEN"
+    },
+    discord: {
+        token: "YOUR_DISCORD_BOT_TOKEN"
     }
 })
 bitprophet.listenToTelegramChatId()
@@ -51,15 +57,19 @@ bitprophet.options({
     telegram: {
         chatId: "YOUR_TELEGRAM_GROUP_ID",
         token: "YOUR_TELEGRAM_BOT_TOKEN"
+    },
+    discord: {
+        chatId: "YOUR_DISCORD_CHANNEL_ID",
+        token: "YOUR_DISCORD_BOT_TOKEN"
     }
 })
 
 bitprophet.start()
 ```
 
-You should now see a message in Telegram telling you BitProphet has started.
+You should now see a message in Telegram/Discord telling you BitProphet has started.
 
-In Telegram type __list__ and you'll see all the available strategies listed with the respective ids.
+In Telegram/Discord type __list__ and you'll see all the available strategies listed with the respective ids.
 If a strategy listed has the [PT] prefix, it means it has Paper Trading active.
 To start a strategy, just type __start strategy_id__. For example, __start buydip__.
 
@@ -106,7 +116,7 @@ module.exports = {
 
 Create your strategies based on the examples.
 
-#### Telegram BitProphet Cheat Sheet
+#### Chat Bots BitProphet Cheat Sheet
 
 * __status__ / __st__ - Check BitProphet's version and status
 * __account__ / __total__ / __ttl__ - Total balance in BTC and USDT, plus BNB amount

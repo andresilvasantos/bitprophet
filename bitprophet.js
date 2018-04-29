@@ -240,9 +240,10 @@ module.exports = function() {
             if(typeof opt.verbose === "boolean") options.verbose = opt.verbose
             options.binance = opt.binance
             options.telegram = opt.telegram
+            options.discord = opt.discord
             vars.options = options
         },
-        listenToTelegramChatId: function() {
+        listenToChatId: function() {
             chatBot.init(true)
         },
         start: function(next) {
