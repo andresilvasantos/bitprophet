@@ -39,7 +39,7 @@ bitprophet.options({
         token: "YOUR_DISCORD_BOT_TOKEN"
     }
 })
-bitprophet.listenToTelegramChatId()
+bitprophet.listenToChatId()
 ```
 
 ![Chat ID](https://github.com/andresilvasantos/bitprophet/raw/master/pres/chat_id.png)
@@ -135,6 +135,10 @@ Create your strategies based on the examples.
 * __list__ - Lists all strategies
 * __list strategyId__ - Lists all valid / trading pairs for the given strategy
 * __restart__ - Kills the platform. Useful when using a keep alive process manager like [pm2](https://github.com/Unitech/pm2).
+
+
+![Profits Discord](https://github.com/andresilvasantos/bitprophet/raw/master/pres/chat_profits.png)
+
 
 
 Contributors: [supershwa](https://github.com/supershwa), [ionutgalita](https://github.com/ionutgalita)
