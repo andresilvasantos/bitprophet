@@ -136,9 +136,8 @@ Create your strategies based on the examples.
 * __list strategyId__ - Lists all valid / trading pairs for the given strategy
 * __restart__ - Kills the platform. Useful when using a keep alive process manager like [pm2](https://github.com/Unitech/pm2).
 
-
 ![Profits Discord](https://github.com/andresilvasantos/bitprophet/raw/master/pres/chat_profits.png)
 
+---
 
-
-Contributors: [supershwa](https://github.com/supershwa), [ionutgalita](https://github.com/ionutgalita)
+Thank you to all contributors: [supershwa](https://github.com/supershwa), [ionutgalita](https://github.com/ionutgalita)
