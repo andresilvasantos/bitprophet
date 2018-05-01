@@ -5,6 +5,7 @@ module.exports = {
     pairs: [],
     pairsInfo: {},
     strategiesDir: "strategies",
+    customCommandsDir: "commands/custom",
     strategies: {},
     startBTCAmount: 0,
     tradingFees: 0.0005,

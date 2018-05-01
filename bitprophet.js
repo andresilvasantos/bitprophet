@@ -13,6 +13,7 @@ module.exports = function() {
         pauseDangerBTC: true,
         mainLoopTimer: 1500,
         strategiesDir: __dirname + '/strategies',
+        customCommandsDir: __dirname + '/commands/custom',
         verbose: true
     }
     var options = default_options;
@@ -235,6 +236,7 @@ module.exports = function() {
         indicators: indicators,
         options: function(opt) {
             if(typeof opt.strategiesDir === "string") options.strategiesDir = opt.strategiesDir
+            if(typeof opt.customCommandsDir === "string") options.customCommandsDir = opt.customCommandsDir
             if(typeof opt.mainLoopTimer === "number") options.mainLoopTimer = opt.mainLoopTimer
             if(typeof opt.pauseDangerBTC === "boolean") options.pauseDangerBTC = opt.pauseDangerBTC
             if(typeof opt.verbose === "boolean") options.verbose = opt.verbose

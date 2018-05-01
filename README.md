@@ -118,9 +118,9 @@ Create your strategies based on the examples.
 
 #### Chat Bots BitProphet Cheat Sheet
 
+* __help__ / __h__ - Shows all available commands
 * __status__ / __st__ - Check BitProphet's version and status
 * __account__ / __total__ / __ttl__ - Total balance in BTC and USDT, plus BNB amount
-* __btc__ - BTC value
 * __profits__ / __%__ - Profits
 * __profits +__ / __% +__ - Profits detailed
 * __left__ / __l__ - Trades left
@@ -134,6 +134,7 @@ Create your strategies based on the examples.
 * __stop strategyId__ - Stops strategy
 * __list__ - Lists all strategies
 * __list strategyId__ - Lists all valid / trading pairs for the given strategy
+* __<token>__ / __<token><market>__ - Current selling price for a specific coin. (e.g. ADABTC, ADAETH)
 * __restart__ - Kills the platform. Useful when using a keep alive process manager like [pm2](https://github.com/Unitech/pm2).
 
 ![Profits Discord](https://github.com/andresilvasantos/bitprophet/raw/master/pres/chat_profits.png)
