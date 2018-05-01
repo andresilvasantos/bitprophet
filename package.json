@@ -1,6 +1,6 @@
 {
   "name": "bitprophet",
-  "version": "0.5.1",
+  "version": "0.6.3",
   "description": "Crypto trading platform for Binance that uses chat bots as its interface",
   "main": "bitprophet.js",
   "repository": {
@@ -8,7 +8,7 @@
     "url": "git+https://github.com/andresilvasantos/bitprophet.git"
   },
   "author": "Andre Santos <andresantos@theonepixel.com>",
-  "license": "CC-BY-NC-ND-3.0",
+  "license": "MIT",
   "keywords": [
     "crypto",
     "trading",
