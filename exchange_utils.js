@@ -108,7 +108,7 @@ module.exports = {
     accountOpenOrders: function(pairName, next) {
 	    binance.openOrders(pairName ? pairName : false, (error, response) => {
     		if (error) {
-                next("Error reading open orders: " + error)
+                    next("Error reading open orders: " + error)
     		    return
     		}
 
@@ -120,6 +120,11 @@ module.exports = {
 
     		next(null, orders)
 	    })
+    },
+    tokenPrice: function(pairName, next) {
+        binance.prices(pairName, (error, ticker) => {
+            next(error, ticker[pairName])
+        });
     },
     createLimitOrder: function(pairName, sideBuy, price, quantity, next) {
         quantity = this.normalizeAmount(pairName, quantity, price)

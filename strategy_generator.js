@@ -5,7 +5,7 @@ const path = require('path')
 const shortid = require('shortid');
 
 module.exports = {
-    create: function(strategyId, strategyName, strategiesDir) {
+    create: function(strategyId, strategyName) {
         var _id = strategyId
         var _name = strategyName
         var _active = false
@@ -18,7 +18,7 @@ module.exports = {
         var _profitTarget = 0
         var _maxLoss = 0
         var _maxTradingPairs = 1
-        var _source = require(path.resolve(vars.options.strategiesDir, _id + '.js'))
+        //var _source = require(path.resolve(vars.options.strategiesDir, _id + '.js'))
 
         var _pairsData = {}
 

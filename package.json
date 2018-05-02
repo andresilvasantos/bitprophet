@@ -8,7 +8,7 @@
     "url": "git+https://github.com/andresilvasantos/bitprophet.git"
   },
   "author": "Andre Santos <andresantos@theonepixel.com>",
-  "license": "CC-BY-NC-ND-3.0",
+  "license": "MIT",
   "keywords": [
     "crypto",
     "trading",
