@@ -1,4 +1,5 @@
 var vars = require(__dirname + '/../vars.js')
+var exchUtils = require(__dirname + '/../exchange_utils.js')
 
 module.exports = {
     run: function(args, next) {
