@@ -4,8 +4,8 @@ const strategyGenerator = require(__dirname + '/strategy_generator.js')
 
 module.exports = {
     init: function() {
-        var strategySettings = require(path.resolve(vars.options.strategiesDir, "index.js"))
-        var strategies = strategySettings.strategies
+        var strategiesSettings = require(path.resolve(vars.options.strategiesDir, "index.js"))
+        var strategies = strategiesSettings.strategies
         var strategiesArray = []
         for(var strategyId of Object.keys(strategies)) {
             var strategy = new strategyGenerator.create(strategyId, strategies[strategyId].name)
