@@ -162,7 +162,7 @@ module.exports = {
 }
 ```
 
-Create in the same directory *test.js* based on the examples.
+Create in the same directory *test.js* and code it based on the examples.
 
 ---
 
