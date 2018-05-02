@@ -6,7 +6,8 @@ module.exports = {
         },
         alertsichimoku: {
             name: "Alerts Ichimoku",
-            targetMarket: "BTC"
+            targetMarket: "BTC",
+            excludeTokens: ["NEO"]
         },
         buydip: {
             name: "Buy Dip",

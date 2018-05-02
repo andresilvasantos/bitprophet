@@ -107,7 +107,8 @@ module.exports = {
             buyAmountMarket: 0.012,
             profitTarget: 1.4,
             maxTradingPairs: 8,
-            targetMarket: "BTC"
+            targetMarket: "BTC",
+            excludeTokens: ["NEO", "TRX"]
         },
         //...
     }
@@ -116,28 +117,52 @@ module.exports = {
 
 Create your strategies based on the examples.
 
-#### Chat Bots BitProphet Cheat Sheet
+#### Chat Bots Commands
 
-* __help__ | __h__ - Shows all available commands
-* __status__ | __st__ - Check BitProphet's version and status
-* __account__ | __total__ | __ttl__ - Total balance in BTC and USDT, plus BNB amount
-* __profits__ | __%__ - Profits
-* __profits +__ | __% +__ - Profits detailed
-* __left__ | __l__ - Trades left
-* __sell token__ | __exit token__  - Sells token, if it's currently trading
-* __sell token price__ | __exit token price__ - Sells token@price, if it's currently trading
+* __help__ | __h__ - Show all available commands
+* __status__ | __st__ - Show version and status
+* __account__ | __total__ | __ttl__ - Show total balance in BTC and USDT, plus BNB amount
+* __profits__ | __%__ - Show profits
+* __profits +__ | __% +__ - Show profits per pair
+* __left__ | __l__ - Show trades left
+* __sell token__ | __exit token__  - Sell token, if it's currently trading
+* __sell token price__ | __exit token price__ - Sell token@price, if it's currently trading
 * __cancel token__ - Cancel currently trading token
-* __orders__ | __o__ - List open orders
-* __orders token__ | __o token__ - List open orders for the given token
-* __start strategyId__ - Starts strategy
-* __stop strategyId__ - Stops strategy
-* __list__ - Lists all strategies
-* __list strategyId__ - Lists all valid / trading pairs for the given strategy
-* __token__ | __tokenmarket__ - Price for the specified token, BTC market default. (e.g. ada, adaeth)
+* __orders__ | __o__ - Show open orders
+* __orders token__ | __o token__ - Show open orders for the given token
+* __start strategyId__ - Start strategy
+* __stop strategyId__ - Stop strategy
+* __list__ - Show available strategies
+* __list strategyId__ - Show valid / trading pairs for the given strategy
+* __token__ | __tokenmarket__ - Show price for the specified token, BTC market default. (e.g. ada, adaeth)
 * __pause__ - Pause system (ongoing trades won't be paused)
-* __restart__ - Kills the platform. Useful when using a keep alive process manager like [pm2](https://github.com/Unitech/pm2).
+* __restart__ - Kill BitProphet's process. Useful when using a keep alive process manager like [pm2](https://github.com/Unitech/pm2).
 
 ![Profits Discord](https://github.com/andresilvasantos/bitprophet/raw/master/pres/chat_profits.png)
+
+#### Adding Custom Commands
+Add the following option naming a new directory for your commands.
+
+```javascript
+bitprophet.options({
+    commandsCustomDir: "./path/my/commands"
+})
+```
+
+Create *index.js* inside that folder with the configuration for all your commands
+```javascript
+module.exports = {
+    commands: {
+        test: {
+            triggers: ["test", "t"]
+            description: "Just a test command"
+        },
+        //...
+    }
+}
+```
+
+Create in the same directory *test.js* based on the examples.
 
 ---
 
