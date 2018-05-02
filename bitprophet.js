@@ -13,7 +13,6 @@ module.exports = function() {
         pauseDangerBTC: true,
         mainLoopTimer: 1500,
         strategiesDir: __dirname + '/strategies',
-        customCommandsDir: __dirname + '/commands/custom',
         verbose: true
     }
     var options = default_options;
@@ -236,16 +235,17 @@ module.exports = function() {
         indicators: indicators,
         options: function(opt) {
             if(typeof opt.strategiesDir === "string") options.strategiesDir = opt.strategiesDir
-            if(typeof opt.customCommandsDir === "string") options.customCommandsDir = opt.customCommandsDir
+            if(typeof opt.commandsCustomDir === "string") options.commandsCustomDir = opt.commandsCustomDir
             if(typeof opt.mainLoopTimer === "number") options.mainLoopTimer = opt.mainLoopTimer
             if(typeof opt.pauseDangerBTC === "boolean") options.pauseDangerBTC = opt.pauseDangerBTC
             if(typeof opt.verbose === "boolean") options.verbose = opt.verbose
             options.binance = opt.binance
-            options.telegram = opt.telegram
-            options.discord = opt.discord
+            options.telegram = opt.telegram || {}
+            options.discord = opt.discord || {}
             vars.options = options
         },
         listenToChatId: function() {
+            console.log("WTF")
             chatBot.init(true)
         },
         start: function(next) {
@@ -283,9 +283,6 @@ module.exports = function() {
                     strategyManager.init()
 
                     vars.pairs["BTCUSDT"].addWatcherChartUpdates(btcIntervalsWatch)
-
-                    //TODO load previous active strategies
-                    //TODO load previous trading pairs
 
                     chatBot.sendMessage(":traffic_light: BitProphet started: " + utils.formatDate(new Date(), true, true) + "\nTotal: " +
                         vars.startBTCAmount + "BTC | " + balance.usdtTotal.toFixed(2) + "$")

@@ -1,6 +1,5 @@
-var vars = require(__dirname + '/../../vars.js')
-var exchUtils = require(__dirname + '/../../exchange_utils.js')
-const binance = require('node-binance-api')
+var vars = require(__dirname + '/../vars.js')
+var exchUtils = require(__dirname + '/../exchange_utils.js')
 
 module.exports = {
     run: function(args, next) {
@@ -28,7 +27,7 @@ module.exports = {
                         parseFloat(exchUtils.fixPrice(pair.name, pair.sellTarget)).toFixed(8))
                 }
                 else {
-                    binance.prices(pair.name, (error, ticker) => {
+                    exchUtils.tokenPrice(pair.name, (error, response) => {
                         if(error) {
                             next('Error fetching prices for ' + pair.chatName);
                             console.log("Error fetching price for", pair.name, error)
@@ -38,9 +37,8 @@ module.exports = {
                         pair.forceSell = true
                         next(null, ":thumbsup: Force sell triggered for " + pair.chatName + "@" + pair.sellTarget)
                         return
-                    });
+                    })
                 }
-
             }
         }
 

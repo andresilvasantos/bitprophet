@@ -123,11 +123,7 @@ module.exports = {
     },
     tokenPrice: function(pairName, next) {
         binance.prices(pairName, (error, ticker) => {
-          if (error) {
-            next(false)
-            return
-          }
-          next(null, ticker[pairName])
+            next(error, ticker[pairName])
         });
     },
     createLimitOrder: function(pairName, sideBuy, price, quantity, next) {

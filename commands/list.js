@@ -1,4 +1,4 @@
-var vars = require(__dirname + '/../../vars.js')
+var vars = require(__dirname + '/../vars.js')
 
 module.exports = {
   run: function(args, next) {

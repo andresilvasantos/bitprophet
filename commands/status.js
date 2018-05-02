@@ -1,6 +1,6 @@
-var vars = require(__dirname + '/../../vars.js')
-var pjson = require(__dirname + '/../../package.json')
-var utils = require(__dirname + '/../../utils.js')
+var vars = require(__dirname + '/../vars.js')
+var pjson = require(__dirname + '/../package.json')
+var utils = require(__dirname + '/../utils.js')
 
 module.exports = {
     run: function(args, next) {

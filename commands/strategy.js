@@ -1,4 +1,4 @@
-var vars = require(__dirname + '/../../vars.js')
+var vars = require(__dirname + '/../vars.js')
 
 module.exports = {
     run: function(args, next) {
@@ -6,7 +6,7 @@ module.exports = {
             next(null, "Name a strategy");
             return
         }
-        
+
         var action = args[0]
         var strategyId = args[1]
         var strategy = null
@@ -41,6 +41,5 @@ module.exports = {
             strategy.setActive(false)
             next(null, ":ghost: " + paperTradingStr + strategy.name() + ' stopped')
         }
-
     }
 }
