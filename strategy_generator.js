@@ -18,7 +18,7 @@ module.exports = {
         var _profitTarget = 0
         var _maxLoss = 0
         var _maxTradingPairs = 1
-        //var _source = require(path.resolve(vars.options.strategiesDir, _id + '.js'))
+        var _source = require(path.resolve(vars.options.strategiesDir, _id + '.js'))
 
         var _pairsData = {}
 
