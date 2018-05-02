@@ -213,9 +213,10 @@ module.exports = {
             return
         }
 
-        var sellOrderAmount = parseFloat(bp.exchUtils.normalizeAmount(pair.name, order.amount * (1 - order.partFill)))
-        var amountToSell = parseFloat(bp.exchUtils.normalizeAmount(pair.name, pair.amountToSell))
-        if(order.price.toFixed(8) != pair.sellTarget.toFixed(8) || amountToSell > sellOrderAmount) {
+        var sellDiff = pair.amountToSell - order.amount * (1 - order.partFill)
+
+        //Sell order price or amount mismatch
+        if(order.price.toFixed(8) != pair.sellTarget.toFixed(8) || sellDiff >= parseFloat(bp.vars.pairsInfo[pair.name].filters.stepSize)) {
             if(pair.trySellTimestamp && Date.now() - pair.trySellTimestamp < 5 * 1000) return
             pair.trySellTimestamp = Date.now()
             recreateSellOrder()

@@ -1,24 +1,27 @@
 {
   "name": "bitprophet",
-  "version": "0.4.5",
-  "description": "Crypto trading platform for Binance that uses Telegram as its interface",
+  "version": "0.6.7",
+  "description": "Crypto trading platform for Binance that uses chat bots as its interface",
   "main": "bitprophet.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/andresilvasantos/bitprophet.git"
   },
   "author": "Andre Santos <andresantos@theonepixel.com>",
-  "license": "CC-BY-NC-ND-3.0",
+  "license": "MIT",
   "keywords": [
     "crypto",
     "trading",
     "exchange",
     "alerts",
     "notifications",
-    "bitcoin"
+    "bitcoin",
+    "telegram",
+    "discord"
   ],
   "dependencies": {
-    "node-binance-api": "^0.4.28",
+    "discord.js": "^11.3.2",
+    "node-binance-api": "^0.4.29",
     "node-emoji": "^1.8.1",
     "node-telegram-bot-api": "^0.30.0",
     "shortid": "^2.2.8"

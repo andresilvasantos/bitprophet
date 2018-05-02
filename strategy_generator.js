@@ -5,13 +5,14 @@ const path = require('path')
 const shortid = require('shortid');
 
 module.exports = {
-    create: function(strategyId, strategyName, strategiesDir) {
+    create: function(strategyId, strategyName) {
         var _id = strategyId
         var _name = strategyName
         var _active = false
         var _warningSilent = false
         var _targetMarket = ""
         var _targetTokens = []
+        var _excludeTokens = []
         var _paperTrading = false
         var _buyAmountMarket = 0
         var _buyPercentageAccount = 0
@@ -49,6 +50,11 @@ module.exports = {
         this.setTargetTokens = function(targetTokens) {
             if(!targetTokens) _targetTokens = []
             else _targetTokens = targetTokens
+        }
+
+        this.setExcludeTokens = function(excludeTokens) {
+            if(!excludeTokens) _excludeTokens = []
+            else _excludeTokens = excludeTokens
         }
 
         this.paperTrading = function() {
@@ -132,7 +138,8 @@ module.exports = {
 
             for(var pair of Object.values(vars.pairs)) {
                 if(_targetMarket.length && pair.marketName().toLowerCase() != _targetMarket.toLowerCase()) continue
-                if(_targetTokens.length && _targetTokens.indexOf(pair.tokenName()) == -1) continue
+                if((_targetTokens.length && _targetTokens.indexOf(pair.tokenName()) == -1) ||
+                    _excludeTokens.indexOf(pair.tokenName()) != -1) continue
 
                 var pairData = this.pairData(pair.name())
                 var blackFlagTime = currentTime - pairData.blackFlagTime
@@ -369,7 +376,7 @@ module.exports = {
 
             var that = this
             pair.processing = true
-            exchUtils.balance(pair.market, function(error, balance) {
+            exchUtils.accountBalance(pair.market, function(error, balance) {
                 if(error) {
                     pair.processing = false
                     if(next) next("Error reading " + pair.market + " balance: " + error)

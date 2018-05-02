@@ -36,7 +36,22 @@ module.exports = {
             next(error)
         });
     },
-    balance: function(token, next) {
+    normalizeAmount: function(pair, amount, price) {
+        // Set minimum order amount with minQty
+        if ( amount < vars.pairsInfo[pair].filters.minQty ) amount = vars.pairsInfo[pair].filters.minQty;
+        // Set minimum order amount with minNotional
+        if (price && price * amount < vars.pairsInfo[pair].filters.minNotional ) {
+            amount = vars.pairsInfo[pair].filters.minNotional / price;
+        }
+        // Round to stepSize
+        return binance.roundStep(amount, vars.pairsInfo[pair].filters.stepSize);
+    },
+    fixPrice: function(pair, price) {
+        var index = String(vars.pairsInfo[pair].filters.tickSize).indexOf("1")
+        var count = index - 1
+        return parseFloat(price).toFixed(count)
+    },
+    accountBalance: function(token, next) {
         binance.balance((error, balances) => {
             next(error, balances[token])
         })
@@ -90,20 +105,26 @@ module.exports = {
             });
         });
     },
-    normalizeAmount: function(pair, amount, price) {
-        // Set minimum order amount with minQty
-        if ( amount < vars.pairsInfo[pair].filters.minQty ) amount = vars.pairsInfo[pair].filters.minQty;
-        // Set minimum order amount with minNotional
-        if (price && price * amount < vars.pairsInfo[pair].filters.minNotional ) {
-            amount = vars.pairsInfo[pair].filters.minNotional / price;
-        }
-        // Round to stepSize
-        return binance.roundStep(amount, vars.pairsInfo[pair].filters.stepSize);
+    accountOpenOrders: function(pairName, next) {
+	    binance.openOrders(pairName ? pairName : false, (error, response) => {
+    		if (error) {
+                    next("Error reading open orders: " + error)
+    		    return
+    		}
+
+            var orders = []
+    		for (var i = 0; i < response.length; ++i) {
+                var order = response[i]
+    		    orders.push({id: order['orderId'], pairName: order['symbol'], side: order['side'], amount: order['origQty'], price: order['price']})
+    		}
+
+    		next(null, orders)
+	    })
     },
-    fixPrice: function(pair, price) {
-        var index = String(vars.pairsInfo[pair].filters.tickSize).indexOf("1")
-        var count = index - 1
-        return parseFloat(price).toFixed(count)
+    tokenPrice: function(pairName, next) {
+        binance.prices(pairName, (error, ticker) => {
+            next(error, ticker[pairName])
+        });
     },
     createLimitOrder: function(pairName, sideBuy, price, quantity, next) {
         quantity = this.normalizeAmount(pairName, quantity, price)
