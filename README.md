@@ -134,7 +134,7 @@ Create your strategies based on the examples.
 * __stop strategyId__ - Stops strategy
 * __list__ - Lists all strategies
 * __list strategyId__ - Lists all valid / trading pairs for the given strategy
-* __<token>__ / __<token><market>__ - Current selling price for a specific coin. (e.g. ADABTC, ADAETH)
+* __token__ / __tokenmarket__ - Price for the specified token, BTC market default. (e.g. ada, adaeth)
 * __restart__ - Kills the platform. Useful when using a keep alive process manager like [pm2](https://github.com/Unitech/pm2).
 
 ![Profits Discord](https://github.com/andresilvasantos/bitprophet/raw/master/pres/chat_profits.png)
