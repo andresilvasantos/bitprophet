@@ -19,7 +19,7 @@ module.exports = {
                 if(pair.token != pairName && pair.name != pairName) continue
                 if(!pair.amountToSell) continue
 
-                if(args.length == 2) {
+                if(args.length >= 3) {
                     var price = parseFloat(args[2])
                     pair.sellTarget = price
                     pair.forceSell = true

@@ -213,20 +213,10 @@ module.exports = {
             return
         }
 
-        var sellDiff = pair.amountToSell - order.amount * (1 - order.partFill)
+        var chart5m = pair.functions.chart(intervalsWatch[1]).ticks
+        var lastClose = parseFloat(chart5m[chart5m.length - 1].close)
 
-        //Sell order price or amount mismatch
-        if(order.price.toFixed(8) != pair.sellTarget.toFixed(8) || sellDiff >= parseFloat(bp.vars.pairsInfo[pair.name].filters.stepSize)) {
-            if(pair.trySellTimestamp && Date.now() - pair.trySellTimestamp < 5 * 1000) return
-            pair.trySellTimestamp = Date.now()
-            recreateSellOrder()
-        }
-        else {
-            var chart5m = pair.functions.chart(intervalsWatch[1]).ticks
-            var lastClose = parseFloat(chart5m[chart5m.length - 1].close)
-
-            var activateStopLoss = strategy.manageStopLoss(pair, lastClose)
-            if(activateStopLoss) recreateSellOrder()
-        }
+        var activateStopLoss = strategy.manageStopLoss(pair, lastClose)
+        if(activateStopLoss) recreateSellOrder()
     }
 }
