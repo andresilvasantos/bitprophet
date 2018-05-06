@@ -72,12 +72,12 @@ module.exports = {
             if((args[0] == pair.tokenName().toLowerCase() && pair.marketName() == "BTC") ||
                 args[0] == pair.name().toLowerCase()) {
                     this.sendMessage(":speech_balloon:")
-                    exchUtils.tokenPrice(pair.name(), (error, response) => {
+                    exchUtils.tokenPrice(pair.name(), (error, price) => {
                         if (error) {
                             this.sendMessage('Error fetching prices for ' + pair.chatName());
                             return
                         }
-                        this.sendMessage(":dollar: " + pair.chatName() + ": " + response)
+                        this.sendMessage(":dollar: " + pair.chatName() + ": " + price)
                     })
                     return
                 }

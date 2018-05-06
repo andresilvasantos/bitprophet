@@ -27,13 +27,13 @@ module.exports = {
                         parseFloat(exchUtils.fixPrice(pair.name, pair.sellTarget)).toFixed(8))
                 }
                 else {
-                    exchUtils.tokenPrice(pair.name, (error, response) => {
+                    exchUtils.tokenPrice(pair.name, (error, price) => {
                         if(error) {
                             next('Error fetching prices for ' + pair.chatName);
                             console.log("Error fetching price for", pair.name, error)
                             return
                         }
-                        pair.sellTarget = parseFloat(ticker[pair.name])
+                        pair.sellTarget = parseFloat(price)
                         pair.forceSell = true
                         next(null, ":thumbsup: Force sell triggered for " + pair.chatName + "@" + pair.sellTarget)
                         return
