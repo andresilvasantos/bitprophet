@@ -389,32 +389,107 @@ module.exports = {
 		//Read more here: https://www.investopedia.com/articles/technical/04/092204.asp
 		//I think they are best used in 6h, 12h and 1d charts for crypto
     
-		var ha = []
-		//first HA candle must be calculated:
-		if(ticks.length > 1) {
-			var o = parseFloat(ticks[0].open)
-			var h = parseFloat(ticks[0].high)
-			var l = parseFloat(ticks[0].low)
-			var c = parseFloat(ticks[0].close)
+		var ha = [];
+        if(ticks.length > 1) {
+          var o = parseFloat(ticks[0].open)
+          var h = parseFloat(ticks[0].high)
+          var l = parseFloat(ticks[0].low)
+          var c = parseFloat(ticks[0].close)
           
-			var hac = (o + h + l + c) / 4
-			var hao = ((o + c)/2)
-			var hah = h
-			var hal = l
-			ha.push({open: hao, high: hah, low: hal, close: hac})
-			for(var i=1; i<ticks.length; i++) {
-				o = parseFloat(ticks[i].open)
-				h = parseFloat(ticks[i].high)
-				l = parseFloat(ticks[i].low)
-				c = parseFloat(ticks[i].close)
+          //first HA candle must be calculated:
+          var hac = (o + h + l + c) / 4
+          var hao = ((o + c)/2)
+          var hah = h
+          var hal = l
+          ha.push({open: hao, high: hah, low: hal, close: hac})
+          for(var i=1; i<ticks.length; i++) {
+            o = parseFloat(ticks[i].open)
+            h = parseFloat(ticks[i].high)
+            l = parseFloat(ticks[i].low)
+            c = parseFloat(ticks[i].close)
             
-				hac = (o + h + l + c) / 4
-				hao = (o + c) / 2
-				hah = Math.max(h, hao, hac)
-				hal = Math.min(l, hao, hac)
-				ha.push({open: hao, high: hah, low: hal, close: hac})
-			}
-		}       
-		return ha
-	}
+            hac = (o + h + l + c) / 4
+            hao = (o + c) / 2
+            hah = Math.max(h, hao, hac)
+            hal = Math.min(l, hao, hac)
+            ha.push({open: hao, high: hah, low: hal, close: hac})
+          }
+        }       
+        return ha
+    },
+    macd: function(ticks, shortema=12, longema=26, signal=9) {
+        // Reference: http://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:moving_average_convergence_divergence_macd
+        var macd = []
+        var emaShort = this.ema(ticks,shortema,100,400)
+        var emaLong = this.ema(ticks,longema,100,400)
+        /*
+        MACD Line: (12-day EMA - 26-day EMA)
+        Signal Line: 9-day EMA of MACD Line
+        MACD Histogram: MACD Line - Signal Line
+        */
+        var macdLine = [];
+        for(var i=0; i<emaLong.length; i++) {
+            var shortDay = emaShort[i]
+            var longDay = emaLong[i]
+            var line = shortDay - longDay
+            macdLine.push(line)
+        }
+        
+        var signalLine = this.ema(macdLine,signal,100,200)
+        
+        var histogram = []
+        for(var i=0; i<signalLine.length; i++) {
+            if(typeof(macdLine[i+signalLine.length]!=="undefined") && typeof(signalLine[i]!=="undefined")) {
+                var hist = macdLine[i+signalLine.length] - signalLine[i]
+                histogram.push(hist)
+            }
+        }
+
+        for(var i=0; i<histogram.length; i++) {
+            if(typeof(macdLine[i+signalLine.length]!=="undefined") && typeof(signalLine[i]!=="undefined")) {
+                macd.push({line: macdLine[i+signalLine.length], signal: signalLine[i], histogram: histogram[i]})
+            }
+        }
+
+        macd.forEach(item => console.log(item))
+
+        return macd
+    },
+    zigzag: function(ticks, deviation=5) {
+        // Reference: https://www.investopedia.com/ask/answers/030415/what-zig-zag-indicator-formula-and-how-it-calculated.asp
+        // Determines percent deviation in price changes, presenting frequency and volatility in deviation. Also helps determine trend reversals.
+        var zigzag = []
+        var p = deviation / 100
+        var lastprice = ticks[ticks.length-1].close
+        var lastperc = false
+        var direction = 0
+        var lastdirection = 0
+        for(let i in ticks) {
+            let price = ticks[i].close
+            let low = ticks[i].low
+            if(!lastprice) {
+                lastprice = price
+            }
+            let diff = price - lastprice
+            let perc = 0
+            if(price != 0) {
+                perc = ((diff / price) * 100)
+            }
+            let percfix = perc < 0 ? perc * -1 : perc
+            direction = perc > 0 ? 1 : -1
+            if(percfix >= deviation) {
+                if(direction != lastdirection) {
+                    lastdirection = direction
+                    zigzag.push({timestamp: ticks[i].timestamp, close: ticks[i].close, deviation: perc})
+                } else {
+                    lastprice = ticks[i].close
+                    zigzag.pop()
+                    zigzag.push({timestamp: ticks[i].timestamp, close: ticks[i].close, deviation: perc})
+                }
+            }
+            p--
+        }
+        
+        return zigzag
+    }
 }
