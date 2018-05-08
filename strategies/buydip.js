@@ -61,19 +61,6 @@ module.exports = {
 			return
 		}
 
-        if(pair.name != "YOYOBTC") return
-
-        var macd = bp.indicators.macd(chart5m, 12, 26, 9, 5)
-        //console.log(pair.name, macd)
-        //console.log(chart5m[0], chart5m[chart5m.length - 1])
-        console.log(pair.name)
-        var zigzag = bp.indicators.zigzag(chart5m, 5)
-
-        for(var i = zigzag.length - 50; i < zigzag.length; ++i) {
-            console.log(zigzag[i])
-        }
-        process.exit(0)
-
 		var stoch1h = bp.indicators.stochastic(chart1h, 14, 11)
 		var stoch1hAvg = bp.indicators.average(stoch1h)
 		var stoch5m = bp.indicators.stochastic(chart5m, 14, 24)
