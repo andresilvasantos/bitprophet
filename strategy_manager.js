@@ -11,6 +11,7 @@ module.exports = {
             var strategy = new strategyGenerator.create(strategyId, strategies[strategyId].name)
             strategy.setTargetMarket(strategies[strategyId].targetMarket)
             strategy.setTargetTokens(strategies[strategyId].targetTokens)
+            strategy.setExcludeTokens(strategies[strategyId].excludeTokens)
             strategy.setPaperTrading(strategies[strategyId].paperTrading)
             strategy.setBuyAmountMarket(strategies[strategyId].buyAmountMarket)
             strategy.setBuyPercentageAccount(strategies[strategyId].buyPercentageAccount)

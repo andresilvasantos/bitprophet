@@ -12,13 +12,14 @@ module.exports = {
         var _warningSilent = false
         var _targetMarket = ""
         var _targetTokens = []
+        var _excludeTokens = []
         var _paperTrading = false
         var _buyAmountMarket = 0
         var _buyPercentageAccount = 0
         var _profitTarget = 0
         var _maxLoss = 0
         var _maxTradingPairs = 1
-        //var _source = require(path.resolve(vars.options.strategiesDir, _id + '.js'))
+        var _source = require(path.resolve(vars.options.strategiesDir, _id + '.js'))
 
         var _pairsData = {}
 
@@ -49,6 +50,11 @@ module.exports = {
         this.setTargetTokens = function(targetTokens) {
             if(!targetTokens) _targetTokens = []
             else _targetTokens = targetTokens
+        }
+
+        this.setExcludeTokens = function(excludeTokens) {
+            if(!excludeTokens) _excludeTokens = []
+            else _excludeTokens = excludeTokens
         }
 
         this.paperTrading = function() {
@@ -132,7 +138,8 @@ module.exports = {
 
             for(var pair of Object.values(vars.pairs)) {
                 if(_targetMarket.length && pair.marketName().toLowerCase() != _targetMarket.toLowerCase()) continue
-                if(_targetTokens.length && _targetTokens.indexOf(pair.tokenName()) == -1) continue
+                if((_targetTokens.length && _targetTokens.indexOf(pair.tokenName()) == -1) ||
+                    _excludeTokens.indexOf(pair.tokenName()) != -1) continue
 
                 var pairData = this.pairData(pair.name())
                 var blackFlagTime = currentTime - pairData.blackFlagTime
