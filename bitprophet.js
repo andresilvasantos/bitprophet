@@ -18,8 +18,11 @@ module.exports = function() {
 	var options = default_options
 
 	var btcIntervalsWatch = ["15m", "5m"]
-	var userDataListenKey = ""
-	var userDataConnectionTimestamp = 0
+	var userDataWebsocket = {
+		listenKey: "",
+		connectionTimestamp: 0,
+		connecting: false
+	}
 
 	function initPairs() {
 		for(var pairInfo of Object.values(vars.pairsInfo)) {
@@ -29,9 +32,13 @@ module.exports = function() {
 	}
 
 	function initUserDataUpdates() {
-		userDataConnectionTimestamp = Date.now()
+		if(userDataWebsocket.connecting) return
+
+		userDataWebsocket.connectionTimestamp = Date.now()
+		userDataWebsocket.connecting = true
 		binance.websockets.userData(balance_update, execution_update, function(listenKey) {
-			userDataListenKey = listenKey
+			userDataWebsocket.listenKey = listenKey
+			userDataWebsocket.connecting = false
 		})
 	}
 
@@ -157,14 +164,19 @@ module.exports = function() {
 	}
 
 	function processStrategies() {
-		if(!exchUtils.websocketActive(userDataListenKey)) {
-			console.log("Loading connection for user data updates: " + utils.formatDate(new Date(), true, true))
-			if(Date.now() - userDataConnectionTimestamp > 10 * 1000) {
+		var dateStr = utils.formatDate(new Date(), true, true)
+
+		if(!exchUtils.websocketActive(userDataWebsocket.listenKey)) {
+			if(!userDataWebsocket.connecting && Date.now() - userDataWebsocket.connectionTimestamp > 10 * 1000) {
+				console.log("Loading connection for user data updates: " + dateStr)
 				initUserDataUpdates()
+			}
+			else {
+				console.log("Waiting connection for user data updates: " + dateStr)
 			}
 		}
 		else {
-			var consoleMsg = "Processing: " + utils.formatDate(new Date(), true, true)
+			var consoleMsg = "Processing: " + dateStr
 			var activeStrategies = strategyManager.listStrategies(true)
 
 			if(!activeStrategies.length) {
