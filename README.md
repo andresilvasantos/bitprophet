@@ -1,3 +1,7 @@
+[![Latest Version](https://img.shields.io/github/release/andresilvasantos/bitprophet.svg?style=flat-square)](https://github.com/andresilvasantos/bitprophet/releases) 
+[![GitHub last commit](https://img.shields.io/github/last-commit/andresilvasantos/bitprophet.svg?maxAge=2400)](#)
+[![npm downloads](https://img.shields.io/npm/dt/bitprophet.svg?maxAge=7200)](https://www.npmjs.com/package/bitprophet)
+
 [![NPM](https://nodei.co/npm/bitprophet.png?compact=true)](https://npmjs.org/package/bitprophet)
 
 # BitProphet
