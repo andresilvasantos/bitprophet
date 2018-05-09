@@ -49,13 +49,13 @@ module.exports = {
 		var lastClose = parseFloat(chart1h[chart1h.length - 1].close)
 
 		var prevClose_1h = parseFloat(chart1h[chart1h.length - 2].close)
-		var ichimoku1h = bp.indicators.ichimoku(chart1h, 10, 30, 60, 30, 30)
+		var ichimoku1h = bp.indicators.ichimoku(chart1h, 10, 30, 60, 30)
 		ichimoku1h = ichimoku1h[0]
 		var ichiLead1_1h = ichimoku1h[2]
 		var ichiLead2_1h = ichimoku1h[3]
 
 		var prevClose_15m = parseFloat(chart15m[chart15m.length - 2].close)
-		var ichimoku15m = bp.indicators.ichimoku(chart15m, 10, 30, 60, 30, 30)
+		var ichimoku15m = bp.indicators.ichimoku(chart15m, 10, 30, 60, 30)
 		ichimoku15m = ichimoku15m[0]
 		var ichiLead1_15m = ichimoku15m[2]
 		var ichiLead2_15m = ichimoku15m[3]

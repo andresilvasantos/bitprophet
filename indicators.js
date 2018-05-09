@@ -3,7 +3,7 @@ module.exports = {
 		return object !== undefined && object !== null && object.constructor == Object
 	},
 	ema: function(ticks, length, momentum = 100, arraySize = 1) {
-        //Read more: http://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:moving_averages
+		//Read more: http://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:moving_averages
 
 		var fromJsonObject = this.isObject(ticks[0])
 		if(ticks.length < length + momentum + arraySize) return []
@@ -45,7 +45,7 @@ module.exports = {
 		return emaArray
 	},
 	sma: function(ticks, length, arraySize = 1) {
-        //Read more: http://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:moving_averages
+		//Read more: http://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:moving_averages
 
 		var fromJsonObject = this.isObject(ticks[0])
 		if(ticks.length < length + arraySize - 1) return []
@@ -70,7 +70,7 @@ module.exports = {
 		return averages
 	},
 	rsi: function(ticks, length, momentum, arraySize = 1) {
-        //Read more: http://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:relative_strength_index_rsi
+		//Read more: http://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:relative_strength_index_rsi
 
 		var fromJsonObject = this.isObject(ticks[0])
 		if(ticks.length < (length + 1) + momentum + arraySize) return []
@@ -154,7 +154,7 @@ module.exports = {
 		return rsiArray
 	},
 	stochastic: function(ticks, length, arraySize = 1, smooth = 3) {
-        //Read more: http://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:stochastic_oscillator_fast_slow_and_full
+		//Read more: http://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:stochastic_oscillator_fast_slow_and_full
 
 		var fromJsonObject = this.isObject(ticks[0])
 		if(ticks.length < length + arraySize + (smooth - 1)) return []
@@ -209,7 +209,7 @@ module.exports = {
 		return stochastics
 	},
 	bollingerBands: function(ticks, length, deviation = 2, arraySize = 1) {
-        //Read more: http://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:bollinger_bands
+		//Read more: http://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:bollinger_bands
 
 		var fromJsonObject = this.isObject(ticks[0])
 		var bands = []
@@ -234,7 +234,7 @@ module.exports = {
 		return bands
 	},
 	ichimoku: function(ticks, conversionPeriods = 10, basePeriods = 30, laggingSpan2Periods = 60, displacement = 30, arraySize = 1) {
-        //Read more: http://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:ichimoku_cloud
+		//Read more: http://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:ichimoku_cloud
 
 		function donchian(startIndex, length) {
 			var lowest = 0, highest = 0
@@ -257,8 +257,7 @@ module.exports = {
 
 		var ichimokuArray = []
 		for(var i = 0; i < arraySize; ++i) {
-			var index = ticks.length - arraySize - 1 + i
-			//console.log(index, ticks.length, arraySize)
+			var index = ticks.length - arraySize - 1 - displacement + i
 			var conversionLine = donchian(index, conversionPeriods)
 			var baseLine = donchian(index, basePeriods)
 			var leadLine1 = (conversionLine + baseLine) / 2.
@@ -268,7 +267,7 @@ module.exports = {
 
 		return ichimokuArray
 	},
-    heikinAshi: function(ticks, arraySize = -1) {
+	heikinAshi: function(ticks, arraySize = -1) {
 		//Heikin Ashi candlesticks are best for swing trading (not daytrading) and are used to identify market trends
 		//Read more: http://stockcharts.com/school/doku.php?id=chart_school:chart_analysis:heikin_ashi
 		//arraySize = -1, calculate Heikin Ashi for all ticks
@@ -277,134 +276,134 @@ module.exports = {
 		var ha = []
 		var startingTick = arraySize == -1 ? 0 : ticks.length - arraySize
 		for(var i = startingTick; i < ticks.length; i++) {
-			o = parseFloat(ticks[i].open)
-			h = parseFloat(ticks[i].high)
-			l = parseFloat(ticks[i].low)
-			c = parseFloat(ticks[i].close)
+			var o = parseFloat(ticks[i].open)
+			var h = parseFloat(ticks[i].high)
+			var l = parseFloat(ticks[i].low)
+			var c = parseFloat(ticks[i].close)
 
-			hac = (o + h + l + c) / 4
-			hao = (o + c) / 2
-			hah = i == startingTick ? h : Math.max(h, hao, hac)
-			hal = i == startingTick ? l : Math.min(l, hao, hac)
+			var hac = (o + h + l + c) / 4
+			var hao = (o + c) / 2
+			var hah = i == startingTick ? h : Math.max(h, hao, hac)
+			var hal = i == startingTick ? l : Math.min(l, hao, hac)
 			ha.push({open: hao, high: hah, low: hal, close: hac})
 		}
-        return ha
-    },
-    macd: function(ticks, shortEma = 12, longEma = 26, signal = 9, arraySize = 1) {
-        //Read more: http://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:moving_average_convergence_divergence_macd
+		return ha
+	},
+	macd: function(ticks, shortEma = 12, longEma = 26, signal = 9, arraySize = 1) {
+		//Read more: http://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:moving_average_convergence_divergence_macd
 
-        /*
+		/*
         MACD Line: Fast EMA - Slow EMA
         Signal Line: EMA of MACD Line
         MACD Histogram: MACD Line - Signal Line
         */
 
-        var momentum = 100
-        var emaArraySize = arraySize + momentum + signal
+		var momentum = 100
+		var emaArraySize = arraySize + momentum + signal
 		var emaShort = this.ema(ticks, shortEma, momentum, emaArraySize)
-        var emaLong = this.ema(ticks, longEma, momentum, emaArraySize)
+		var emaLong = this.ema(ticks, longEma, momentum, emaArraySize)
 
-        var macdLine = []
-        for(var i = 0; i < emaArraySize; ++i) {
-            macdLine.push(emaShort[emaShort.length - emaArraySize + i] - emaLong[emaLong.length - emaArraySize + i])
-        }
+		var macdLine = []
+		for(var i = 0; i < emaArraySize; ++i) {
+			macdLine.push(emaShort[emaShort.length - emaArraySize + i] - emaLong[emaLong.length - emaArraySize + i])
+		}
 
-        var signalLine = this.ema(macdLine, signal, momentum, arraySize)
+		var signalLine = this.ema(macdLine, signal, momentum, arraySize)
 
-        var histogramArray = []
-        for(var i = 0; i < arraySize; ++i) {
-            var histogram = macdLine[macdLine.length - arraySize + i] - signalLine[i]
-            histogramArray.push(histogram)
-        }
+		var histogramArray = []
+		for(i = 0; i < arraySize; ++i) {
+			var histogram = macdLine[macdLine.length - arraySize + i] - signalLine[i]
+			histogramArray.push(histogram)
+		}
 
-        var macd = []
-        for(var i = 0; i < arraySize; ++i) {
-            macd.push({line: macdLine[macdLine.length - arraySize + i], signal: signalLine[i], histogram: histogramArray[i]})
-        }
+		var macd = []
+		for(i = 0; i < arraySize; ++i) {
+			macd.push({line: macdLine[macdLine.length - arraySize + i], signal: signalLine[i], histogram: histogramArray[i]})
+		}
 
-        return macd
-    },
-    zigzag: function(ticks, deviation = 5, arraySize = -1) {
-        //Determines percent deviation in price changes, presenting frequency and volatility in deviation. Also helps determine trend reversals.
-        //Read more: http://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:zigzag
+		return macd
+	},
+	zigzag: function(ticks, deviation = 5, arraySize = -1) {
+		//Determines percent deviation in price changes, presenting frequency and volatility in deviation. Also helps determine trend reversals.
+		//Read more: http://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:zigzag
 		//arraySize = -1, calculate ZigZag for all ticks
 		//arraySize = n, where n >= 1, calculate the ZigZag for the last n ticks
 
-        var turningPoints = []
-        var basePrice = -1
-        var lastDeviation = 0
-        deviation /= 100.
+		var turningPoints = []
+		var basePrice = -1
+		var lastDeviation = 0
+		deviation /= 100.
 
 		var startingTick = arraySize == -1 ? 0 : ticks.length - arraySize
-        //Calculate all turning points that have a deviation equal or superior to the argument received
-        for(var i = startingTick; i < ticks.length; ++i) {
-            var close = parseFloat(ticks[i].close)
-            var high = parseFloat(ticks[i].high)
-            var low = parseFloat(ticks[i].low)
-            var positiveDeviation = high / basePrice - 1
-            var negativeDeviation = low / basePrice - 1
+		//Calculate all turning points that have a deviation equal or superior to the argument received
+		for(var i = startingTick; i < ticks.length; ++i) {
+			var close = parseFloat(ticks[i].close)
+			var high = parseFloat(ticks[i].high)
+			var low = parseFloat(ticks[i].low)
+			var positiveDeviation = high / basePrice - 1
+			var negativeDeviation = low / basePrice - 1
 
-            if(basePrice == -1) {
-                basePrice = close
-                lastDeviation = 0
-                turningPoints.push({timePeriod: i, value: close, deviation: lastDeviation})
-                continue
-            }
+			if(basePrice == -1) {
+				basePrice = close
+				lastDeviation = 0
+				turningPoints.push({timePeriod: i, value: close, deviation: lastDeviation})
+				continue
+			}
 
-            //Is it a positive turning point or is it higher than the last positive one?
-            if(positiveDeviation >= deviation || (positiveDeviation > 0 && lastDeviation > 0)) {
-                if(lastDeviation > 0) {
-                    positiveDeviation += lastDeviation
-                    turningPoints.pop()
-                }
+			//Is it a positive turning point or is it higher than the last positive one?
+			if(positiveDeviation >= deviation || (positiveDeviation > 0 && lastDeviation > 0)) {
+				if(lastDeviation > 0) {
+					positiveDeviation += lastDeviation
+					turningPoints.pop()
+				}
 
-                turningPoints.push({timePeriod: i, value: high, deviation: positiveDeviation})
-                lastDeviation = positiveDeviation
-                basePrice = high
-            }
-            //Is it a positive turning point or is it lower than the last negative one?
-            else if(negativeDeviation <= -deviation || (negativeDeviation < 0 && lastDeviation < 0)) {
-                if(lastDeviation < 0) {
-                    negativeDeviation += lastDeviation
-                    turningPoints.pop()
-                }
+				turningPoints.push({timePeriod: i, value: high, deviation: positiveDeviation})
+				lastDeviation = positiveDeviation
+				basePrice = high
+			}
+			//Is it a positive turning point or is it lower than the last negative one?
+			else if(negativeDeviation <= -deviation || (negativeDeviation < 0 && lastDeviation < 0)) {
+				if(lastDeviation < 0) {
+					negativeDeviation += lastDeviation
+					turningPoints.pop()
+				}
 
-                turningPoints.push({timePeriod: i, value: low, deviation: negativeDeviation})
-                lastDeviation = negativeDeviation
-                basePrice = low
-            }
-            //Add always the last one as a turning point, just to make our life easier for the next calculation
-            else if(i == ticks.length - 1) {
-                if(positiveDeviation > 0) turningPoints.push({timePeriod: i, value: high, deviation: positiveDeviation})
-                else turningPoints.push({timePeriod: i, value: low, deviation: negativeDeviation})
-            }
-        }
+				turningPoints.push({timePeriod: i, value: low, deviation: negativeDeviation})
+				lastDeviation = negativeDeviation
+				basePrice = low
+			}
+			//Add always the last one as a turning point, just to make our life easier for the next calculation
+			else if(i == ticks.length - 1) {
+				if(positiveDeviation > 0) turningPoints.push({timePeriod: i, value: high, deviation: positiveDeviation})
+				else turningPoints.push({timePeriod: i, value: low, deviation: negativeDeviation})
+			}
+		}
 
-        var zigzag = []
-        //Add the turning points to the returning array, calculate the values between those turning points and add them as well
-        for(var i = 0; i < turningPoints.length; ++i) {
-            var turningPoint = turningPoints[i]
-            zigzag.push({timePeriod: turningPoint.timePeriod, value: turningPoint.value, deviation: parseFloat((turningPoint.deviation * 100).toFixed(2)),
-                turningPoint: turningPoint.deviation > deviation || turningPoint.deviation < -deviation})
+		var zigzag = []
+		//Add the turning points to the returning array, calculate the values between those turning points and add them as well
+		for(i = 0; i < turningPoints.length; ++i) {
+			var turningPoint = turningPoints[i]
+			zigzag.push({timePeriod: turningPoint.timePeriod, value: turningPoint.value, deviation: parseFloat((turningPoint.deviation * 100).toFixed(2)),
+				turningPoint: turningPoint.deviation > deviation || turningPoint.deviation < -deviation})
 
-            if(turningPoint.timePeriod >= ticks.length -1) continue
+			if(turningPoint.timePeriod >= ticks.length -1) continue
 
-            var nextTurningPoint = turningPoints[i + 1]
-            for(var j = turningPoint.timePeriod + 1; j < nextTurningPoint.timePeriod; ++j) {
-                var distanceToTP = j - turningPoint.timePeriod
-                var distanceTPs = nextTurningPoint.timePeriod - turningPoint.timePeriod
-                var value = turningPoint.value + (nextTurningPoint.value - turningPoint.value) / distanceTPs * distanceToTP
-                var currentDeviation = value / turningPoint.value
+			var nextTurningPoint = turningPoints[i + 1]
+			for(var j = turningPoint.timePeriod + 1; j < nextTurningPoint.timePeriod; ++j) {
+				var distanceToTP = j - turningPoint.timePeriod
+				var distanceTPs = nextTurningPoint.timePeriod - turningPoint.timePeriod
+				var value = turningPoint.value + (nextTurningPoint.value - turningPoint.value) / distanceTPs * distanceToTP
+				var currentDeviation = value / turningPoint.value
 
-                zigzag.push({timePeriod: j, value: value, deviation: parseFloat((currentDeviation * 100).toFixed(2)),
-                    turningPoint: false})
-            }
-        }
+				zigzag.push({timePeriod: j, value: value, deviation: parseFloat((currentDeviation * 100).toFixed(2)),
+					turningPoint: false})
+			}
+		}
 
-        return zigzag
-    },
+		return zigzag
+	},
 	waveTrend: function(ticks, channelLength, avgLength, arraySize = 1) {
-        //Read more: https://www.tradingview.com/script/2KE8wTuF-Indicator-WaveTrend-Oscillator-WT/
+		//Read more: https://www.tradingview.com/script/2KE8wTuF-Indicator-WaveTrend-Oscillator-WT/
 
 		var momentum = 100
 		var hlc3 = []
@@ -433,7 +432,7 @@ module.exports = {
 		return waveTrendArray
 	},
 	nextSupportBase: function(ticks, length, startBackRead = 1, confirmationsNeeded = 2, percentageBounce = 1.01) {
-        //Indicator based on Quickfingers Luc's technique: https://www.youtube.com/watch?v=vgcFe_XO_LQ
+		//Indicator based on Quickfingers Luc's technique: https://www.youtube.com/watch?v=vgcFe_XO_LQ
 
 		var referenceLowValue = this.lowestValue(ticks, startBackRead, 0)
 		var nextBase = referenceLowValue
@@ -473,7 +472,7 @@ module.exports = {
 		return nextBase
 	},
 	measureMaxDiff: function(ticks, length, measureWicks = false) {
-        //Percentual difference between the high and low from the last length of ticks
+		//Percentual difference between the high and low from the last length of ticks
 
 		var highValue = ticks[ticks.length - 1].close
 		var lowValue = highValue
@@ -503,7 +502,7 @@ module.exports = {
 		return (highValue - lowValue) / lowValue * 100
 	},
 	highestValue: function(ticks, length, startBackRead = 1) {
-        //Returns the highest value from the last length of ticks
+		//Returns the highest value from the last length of ticks
 
 		var highValue = ticks[ticks.length - 1 - startBackRead].high
 		for(var i = startBackRead; i < length; ++i) {
@@ -514,7 +513,7 @@ module.exports = {
 		return highValue
 	},
 	lowestValue: function(ticks, length, startBackRead = 1) {
-        //Returns the lowest value from the last length of ticks
+		//Returns the lowest value from the last length of ticks
 
 		var lowValue = ticks[ticks.length - 1 - startBackRead].low
 		for(var i = startBackRead; i < length; ++i) {
@@ -525,7 +524,7 @@ module.exports = {
 		return lowValue
 	},
 	average: function(values) {
-        //Returns the average of the input array
+		//Returns the average of the input array
 
 		var avgValues = 0
 		for(var i = 0; i < values.length; ++i) {
@@ -534,8 +533,8 @@ module.exports = {
 		return avgValues /= values.length
 	},
 	volume24h: function(ticks, intervalMin) {
-        //Returns the volume for the last 24h.
-        //intervalMin is the ticks' interval in minutes, so when using the interval 1h, intervalMin = 60
+		//Returns the volume for the last 24h.
+		//intervalMin is the ticks' interval in minutes, so when using the interval 1h, intervalMin = 60
 
 		var volume24h = 0
 		for(var i = ticks.length - (24 * 60 / intervalMin); i < ticks.length; ++i) {

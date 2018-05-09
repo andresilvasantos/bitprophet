@@ -164,7 +164,6 @@ module.exports = {
 
 					var needsCheck = currentTime - pairData.lastValidCheck >= 10 * 60 * 1000
 					if(needsCheck) {
-						/*eslint no-unsafe-finally: 1*/
 						try {
 							_source.checkValidWorkingPair(this, pairData)
 						}
@@ -174,9 +173,6 @@ module.exports = {
 								_warningSilent = true
 							}
 							console.log(error)
-						}
-						finally {
-							continue
 						}
 					}
 				}

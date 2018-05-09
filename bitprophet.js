@@ -253,7 +253,7 @@ module.exports = function() {
 			})
 
 			var oldLog = console.log
-			console.log = function (message) {
+			console.log = function() {
 				if(vars.options.verbose) oldLog.apply(console, arguments)
 			}
 

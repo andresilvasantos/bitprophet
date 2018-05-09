@@ -1,6 +1,6 @@
 {
   "name": "bitprophet",
-  "version": "0.6.13",
+  "version": "0.6.14",
   "description": "Crypto trading platform for Binance that uses chat bots as its interface",
   "main": "bitprophet.js",
   "repository": {
@@ -13,6 +13,7 @@
     "crypto",
     "trading",
     "exchange",
+    "binance",
     "alerts",
     "notifications",
     "bitcoin",
@@ -25,5 +26,8 @@
     "node-emoji": "^1.8.1",
     "node-telegram-bot-api": "^0.30.0",
     "shortid": "^2.2.8"
+  },
+  "devDependencies": {
+    "eslint": "^4.19.1"
   }
 }
