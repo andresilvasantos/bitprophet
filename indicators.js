@@ -268,37 +268,26 @@ module.exports = {
 
 		return ichimokuArray
 	},
-    heikinAshi: function(ticks) {
+    heikinAshi: function(ticks, arraySize = -1) {
 		//Heikin Ashi candlesticks are best for swing trading (not daytrading) and are used to identify market trends
 		//Read more: http://stockcharts.com/school/doku.php?id=chart_school:chart_analysis:heikin_ashi
+		//arraySize = -1, calculate Heikin Ashi for all ticks
+		//arraySize = n, where n >= 1, calculate Heikin Ashi for the last n ticks
 
 		var ha = []
-        if(ticks.length > 1) {
-            var o = parseFloat(ticks[0].open)
-            var h = parseFloat(ticks[0].high)
-            var l = parseFloat(ticks[0].low)
-            var c = parseFloat(ticks[0].close)
+		var startingTick = arraySize == -1 ? 0 : ticks.length - arraySize
+		for(var i = startingTick; i < ticks.length; i++) {
+			o = parseFloat(ticks[i].open)
+			h = parseFloat(ticks[i].high)
+			l = parseFloat(ticks[i].low)
+			c = parseFloat(ticks[i].close)
 
-            //first HA candle must be calculated:
-            var hac = (o + h + l + c) / 4
-            var hao = ((o + c)/2)
-            var hah = h
-            var hal = l
-            ha.push({open: hao, high: hah, low: hal, close: hac})
-
-            for(var i = 1; i < ticks.length; i++) {
-                o = parseFloat(ticks[i].open)
-                h = parseFloat(ticks[i].high)
-                l = parseFloat(ticks[i].low)
-                c = parseFloat(ticks[i].close)
-
-                hac = (o + h + l + c) / 4
-                hao = (o + c) / 2
-                hah = Math.max(h, hao, hac)
-                hal = Math.min(l, hao, hac)
-                ha.push({open: hao, high: hah, low: hal, close: hac})
-            }
-        }
+			hac = (o + h + l + c) / 4
+			hao = (o + c) / 2
+			hah = i == startingTick ? h : Math.max(h, hao, hac)
+			hal = i == startingTick ? l : Math.min(l, hao, hac)
+			ha.push({open: hao, high: hah, low: hal, close: hac})
+		}
         return ha
     },
     macd: function(ticks, shortEma = 12, longEma = 26, signal = 9, arraySize = 1) {
@@ -335,17 +324,20 @@ module.exports = {
 
         return macd
     },
-    zigzag: function(ticks, deviation = 5) {
+    zigzag: function(ticks, deviation = 5, arraySize = -1) {
         //Determines percent deviation in price changes, presenting frequency and volatility in deviation. Also helps determine trend reversals.
         //Read more: http://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:zigzag
+		//arraySize = -1, calculate ZigZag for all ticks
+		//arraySize = n, where n >= 1, calculate the ZigZag for the last n ticks
 
         var turningPoints = []
         var basePrice = -1
         var lastDeviation = 0
         deviation /= 100.
 
+		var startingTick = arraySize == -1 ? 0 : ticks.length - arraySize
         //Calculate all turning points that have a deviation equal or superior to the argument received
-        for(var i = 0; i < ticks.length; ++i) {
+        for(var i = startingTick; i < ticks.length; ++i) {
             var close = parseFloat(ticks[i].close)
             var high = parseFloat(ticks[i].high)
             var low = parseFloat(ticks[i].low)
