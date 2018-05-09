@@ -36,9 +36,9 @@ module.exports = {
                         pair.sellTarget = parseFloat(price)
                         pair.forceSell = true
                         next(null, ":thumbsup: Force sell triggered for " + pair.chatName + "@" + pair.sellTarget)
-                        return
                     })
                 }
+				return
             }
         }
 
