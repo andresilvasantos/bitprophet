@@ -195,7 +195,8 @@ module.exports = {
 
 								let quantity = order.amount
 								let quantityFixed = quantity < 1 ? quantity : parseFloat(quantity).toFixed(2)
-								chatBot.sendMessage(":high_brightness: [PT] Traded - " + pairData.chatName + " BUY " + quantityFixed + "@" + exchUtils.fixPrice(pairData.name, order.price) + " | 100.00%")
+								chatBot.sendMessage(":high_brightness: [PT] Traded - " + pairData.chatName + " BUY " +
+									quantityFixed + "@" + exchUtils.fixPrice(pairData.name, order.price) + " | 100.00%")
 							}
 						}
 						else {
@@ -206,7 +207,8 @@ module.exports = {
 
 								let quantity = order.amount
 								let quantityFixed = quantity < 1 ? quantity : parseFloat(quantity).toFixed(2)
-								chatBot.sendMessage(":high_brightness: [PT] Traded - " + pairData.chatName + " SELL " + quantityFixed + "@" + exchUtils.fixPrice(pairData.name, order.price) + " | 100.00%")
+								chatBot.sendMessage(":high_brightness: [PT] Traded - " + pairData.chatName + " SELL " +
+									quantityFixed + "@" + exchUtils.fixPrice(pairData.name, order.price) + " | 100.00%")
 							}
 						}
 					}
@@ -226,8 +228,6 @@ module.exports = {
 		}
 
 		this.manageStopLoss = function(pairData, lastClose, trailingType = 2, trailingPercentage = 0.006, sellPriceDistance = 0.001) {
-			//var diffPercentage = (lastClose - pairData.entryPrice) / pairData.entryPrice * 100
-
 			if(lastClose < pairData.stopLoss.sellPrice && lastClose < pairData.stopLoss.stopPrice) {
 				if(!pairData.dangerSilent) {
 					this.sendMessage(pairData, "@" + lastClose + " crossed stop loss price of " + pairData.stopLoss.sellPrice + "!", "warning")
@@ -361,11 +361,13 @@ module.exports = {
 
 		this.buy = function(pair, price, amountMarket, next) {
 			if(_paperTrading) {
-				var quantity = parseFloat(exchUtils.normalizeAmount(pair.name, parseFloat(amountMarket / price), price))
-				var quantityFixed = quantity < 1 ? quantity : parseFloat(quantity).toFixed(2)
-				var order = this.createOrder(pair.name, shortid.generate(), "BUY", parseFloat(price), quantity)
+				amountMarket = parseFloat(amountMarket)
+				price = parseFloat(price)
+				var quantity = parseFloat(exchUtils.normalizeAmount(pair.name, amountMarket / price, price))
+				var order = this.createOrder(pair.name, shortid.generate(), "BUY", price, quantity)
 
 				setTimeout(function() {
+					var quantityFixed = quantity < 1 ? quantity : quantity.toFixed(2)
 					chatBot.sendMessage(":package: [PT] Created - " + pair.chatName + " BUY " + quantityFixed + "@" + exchUtils.fixPrice(pair.name, price))
 				}, 1000)
 
@@ -409,11 +411,12 @@ module.exports = {
 
 		this.sell = function(pair, price, quantity, next) {
 			if(_paperTrading) {
+				price = parseFloat(price)
 				quantity = parseFloat(exchUtils.normalizeAmount(pair.name, quantity, price))
-				var quantityFixed = quantity < 1 ? quantity : parseFloat(quantity).toFixed(2)
-				var order = this.createOrder(pair.name, shortid.generate(), "SELL", parseFloat(price), parseFloat(quantity))
+				var order = this.createOrder(pair.name, shortid.generate(), "SELL", price, quantity)
 
 				setTimeout(function() {
+					var quantityFixed = quantity < 1 ? quantity : quantity.toFixed(2)
 					chatBot.sendMessage(":package: [PT] Created - " + pair.chatName + " SELL " + quantityFixed + "@" + exchUtils.fixPrice(pair.name, price))
 				}, 1000)
 
