@@ -338,7 +338,7 @@ module.exports = {
 
 			for(var i = 0; i < orders.length; ++i) {
 				var order = orders[i]
-				exchUtils.cancelOrder(pairName, order.id, function(error) {
+				this.cancelOrder(data, order.id, function(error) {
 					if(error) {
 						console.log("Error canceling order", error)
 					}
