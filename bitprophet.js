@@ -253,7 +253,6 @@ module.exports = function() {
 			vars.options = options
 		},
 		listenToChatId: function() {
-			console.log("WTF")
 			chatBot.init(true)
 		},
 		start: function(next) {

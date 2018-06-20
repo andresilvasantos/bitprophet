@@ -1,6 +1,6 @@
 {
   "name": "bitprophet",
-  "version": "0.6.18",
+  "version": "0.6.19",
   "description": "Crypto trading platform for Binance that uses chat bots as its interface",
   "main": "bitprophet.js",
   "repository": {

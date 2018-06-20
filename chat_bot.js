@@ -1,3 +1,5 @@
+process.env.NTBA_FIX_319 = 1;
+
 var vars = require(__dirname + "/vars.js")
 var exchUtils = require(__dirname + "/exchange_utils.js")
 var emoji = require("node-emoji")
