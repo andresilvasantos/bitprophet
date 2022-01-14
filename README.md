@@ -4,6 +4,11 @@
 
 [![NPM](https://nodei.co/npm/bitprophet.png?compact=true)](https://npmjs.org/package/bitprophet)
 
+# WARNING: repository no longer maintained ⚠️
+This source code evolved into a full desktop trading application, to be launched in Q1 2022.
+For more information, [![follow me on Twitter](https://twitter.com/megaroads)].
+A big thank you to everyone who dedicate their time to help it grow.
+
 # BitProphet
 BitProphet is a node crypto trading platform for Binance exchange that uses chat bots as its interface. Its main purpose is the automation of trading techniques, but it can also be used as a simple order notification tracker or as an alert system for the most used technical indicators.
 Suggestions and pull requests are very welcome!
